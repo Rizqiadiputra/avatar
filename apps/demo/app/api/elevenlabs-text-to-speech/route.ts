@@ -1,83 +1,64 @@
+import { ElevenLabsClient, ElevenLabsError } from "@elevenlabs/elevenlabs-js";
 import { ELEVENLABS_API_KEY } from "../secrets";
+
+// The SDK reads ELEVENLABS_API_KEY from the environment (apps/demo/.env.local).
+const elevenlabs = new ElevenLabsClient();
+
+const json = (data: unknown, status: number) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { text, voice_id = "21m00Tcm4TlvDq8ikWAM" } = body;
+    // Default: Sarah (premade voice, works on the ElevenLabs free plan).
+    // TODO: switch to Nilasari "NPDHDOOQCSyifTJZOe6J" (native Indonesian female)
+    // after upgrading — library voices require a paid plan via the API.
+    // Note: ElevenLabs premade voices expire on 2026-12-31.
+    const { text, voice_id = "EXAVITQu4vr4xnSDxMaL" } = body;
 
     if (!text) {
-      return new Response(JSON.stringify({ error: "text is required" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return json({ error: "text is required" }, 400);
     }
 
     if (!ELEVENLABS_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "ElevenLabs API key not configured" }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      return json({ error: "ElevenLabs API key not configured" }, 500);
     }
 
-    // Call ElevenLabs API
-    const res = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voice_id}/with-timestamps?output_format=pcm_24000`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "xi-api-key": ELEVENLABS_API_KEY,
-        },
-        body: JSON.stringify({
-          text,
-        }),
-      },
-    );
-
-    if (!res.ok) {
-      const errorData = await res.text();
-      console.error("ElevenLabs API error:", errorData);
-      return new Response(
-        JSON.stringify({
-          error: "Failed to generate speech",
-          details: errorData,
-        }),
-        {
-          status: res.status,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-    }
-
-    // Convert audio to base64
-    const data = await res.json();
-    const audio = data.audio_base64;
-
-    return new Response(JSON.stringify({ audio }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
+    const data = await elevenlabs.textToSpeech.convertWithTimestamps(voice_id, {
+      text,
+      // Model multilingual agar pelafalan Bahasa Indonesia benar
+      modelId: "eleven_multilingual_v2",
+      languageCode: "id",
+      outputFormat: "pcm_24000",
+      // Calm delivery: steady (high stability), no added style, 10% slower.
+      voiceSettings: {
+        stability: 0.75,
+        similarityBoost: 0.75,
+        style: 0,
+        speed: 0.9,
+        useSpeakerBoost: true,
       },
     });
+
+    return json({ audio: data.audioBase64 }, 200);
   } catch (error) {
-    console.error("Error generating speech:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to generate speech" }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
+    if (error instanceof ElevenLabsError) {
+      console.error("ElevenLabs API error:", error.statusCode, error.body);
+      return json(
+        {
+          error: "Failed to generate speech",
+          details:
+            typeof error.body === "string"
+              ? error.body
+              : JSON.stringify(error.body),
         },
-      },
-    );
+        error.statusCode ?? 500,
+      );
+    }
+    console.error("Error generating speech:", error);
+    return json({ error: "Failed to generate speech" }, 500);
   }
 }

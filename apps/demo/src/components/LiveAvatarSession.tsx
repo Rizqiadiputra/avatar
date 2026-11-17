@@ -11,6 +11,18 @@ import {
 } from "../liveavatar";
 import { SessionState, VoiceChatConfig } from "@heygen/liveavatar-web-sdk";
 import { useAvatarActions } from "../liveavatar/useAvatarActions";
+import { useLessonPlayer } from "../liveavatar/useLessonPlayer";
+import { DEFAULT_LANGUAGE, LanguageCode } from "../liveavatar/languages";
+import { useClassClosing } from "../liveavatar/useClassClosing";
+
+const formatClock = (seconds: number) =>
+  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+
+const CLOSING_LABEL = {
+  time_up: "Waktu habis, menutup kelas…",
+  finished: "Menutup kelas…",
+  idle: "Tidak ada pertanyaan, menutup kelas…",
+} as const;
 import { SessionMode } from "./LiveAvatarDemo";
 
 const StatusDot: React.FC<{ active: boolean; label: string }> = ({
@@ -59,9 +71,10 @@ const ActionButton: React.FC<{
 
 const LiveAvatarSessionComponent: React.FC<{
   mode: SessionMode;
+  language: LanguageCode;
   onSessionStopped: () => void;
   hasVoiceChat: boolean;
-}> = ({ mode, onSessionStopped, hasVoiceChat }) => {
+}> = ({ mode, language, onSessionStopped, hasVoiceChat }) => {
   const [message, setMessage] = useState("");
   const {
     sessionState,
@@ -92,6 +105,12 @@ const LiveAvatarSessionComponent: React.FC<{
   const avatarActionsMode = mode === "FULL_PTT" ? "FULL" : mode;
   const { interrupt, repeat, startListening, stopListening } =
     useAvatarActions(avatarActionsMode);
+  const lesson = useLessonPlayer(avatarActionsMode, { language });
+  const closing = useClassClosing(avatarActionsMode, {
+    language,
+    qaActive: lesson.status === "done",
+    onBeforeClose: lesson.halt,
+  });
 
   const textChatMode = mode === "FULL_PTT" ? "FULL" : mode;
   const { sendMessage } = useTextChat(textChatMode);
@@ -212,6 +231,82 @@ const LiveAvatarSessionComponent: React.FC<{
               <span className="text-xs text-white/70 font-medium">Avatar</span>
             </div>
           </div>
+          {/* Lesson progress */}
+          {sessionState === SessionState.CONNECTED && (
+            <div className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-xs text-white/80">
+              {closing.status !== "open" ? (
+                <span>
+                  {closing.reason
+                    ? CLOSING_LABEL[closing.reason]
+                    : "Menutup kelas…"}
+                </span>
+              ) : lesson.status === "playing" ? (
+                <>
+                  <span>
+                    Materi {lesson.current}/{lesson.total}
+                  </span>
+                  <button
+                    className="underline hover:text-white"
+                    onClick={lesson.skip}
+                  >
+                    Lewati
+                  </button>
+                </>
+              ) : lesson.status === "paused" ? (
+                <>
+                  <span>
+                    Materi dijeda {lesson.current}/{lesson.total}
+                  </span>
+                  <button
+                    className="underline hover:text-white"
+                    onClick={lesson.resume}
+                  >
+                    Lanjutkan
+                  </button>
+                  <button
+                    className="underline hover:text-white"
+                    onClick={lesson.skip}
+                  >
+                    Lewati
+                  </button>
+                </>
+              ) : lesson.status === "done" ? (
+                <>
+                  <span>Sesi tanya jawab</span>
+                  <button
+                    className="underline hover:text-white"
+                    onClick={lesson.start}
+                  >
+                    Ulangi materi
+                  </button>
+                  <button
+                    className="underline hover:text-white"
+                    onClick={() => closing.close("finished")}
+                  >
+                    Akhiri kelas
+                  </button>
+                </>
+              ) : (
+                <span>Menyiapkan materi…</span>
+              )}
+              {closing.status === "open" &&
+                closing.remainingSeconds !== null && (
+                  <span
+                    className={`tabular-nums pl-2 border-l border-white/20 ${
+                      closing.remainingSeconds <= 120 ? "text-yellow-300" : ""
+                    }`}
+                    title={
+                      closing.limitedBySession
+                        ? "Dibatasi durasi maksimum sesi LiveAvatar (sandbox: 60 detik)"
+                        : "Sisa waktu kelas"
+                    }
+                  >
+                    {formatClock(closing.remainingSeconds)}
+                    {closing.limitedBySession && " · batas sesi"}
+                  </span>
+                )}
+            </div>
+          )}
           {/* Stop button */}
           <button
             className="absolute bottom-3 right-3 px-4 py-2 text-sm font-medium rounded-lg bg-red-500/80 text-white hover:bg-red-500 backdrop-blur-sm transition-colors"
@@ -386,7 +481,12 @@ const LiveAvatarSessionComponent: React.FC<{
           <ActionButton onClick={stopListening} size="sm">
             Stop Listening Pose
           </ActionButton>
-          <ActionButton onClick={interrupt} size="sm">
+          <ActionButton
+            onClick={() =>
+              lesson.status === "playing" ? lesson.pause() : interrupt()
+            }
+            size="sm"
+          >
             Interrupt
           </ActionButton>
           <ActionButton onClick={keepAlive} size="sm">
@@ -438,10 +538,17 @@ const LiveAvatarSessionComponent: React.FC<{
 
 export const LiveAvatarSession: React.FC<{
   mode: SessionMode;
+  language?: LanguageCode;
   sessionAccessToken: string;
   onSessionStopped: () => void;
   voiceChatConfig?: VoiceChatConfig;
-}> = ({ mode, sessionAccessToken, onSessionStopped, voiceChatConfig = {} }) => {
+}> = ({
+  mode,
+  language = DEFAULT_LANGUAGE,
+  sessionAccessToken,
+  onSessionStopped,
+  voiceChatConfig = {},
+}) => {
   return (
     <LiveAvatarContextProvider
       sessionAccessToken={sessionAccessToken}
@@ -449,6 +556,7 @@ export const LiveAvatarSession: React.FC<{
     >
       <LiveAvatarSessionComponent
         mode={mode}
+        language={language}
         onSessionStopped={onSessionStopped}
         hasVoiceChat={!!voiceChatConfig}
       />

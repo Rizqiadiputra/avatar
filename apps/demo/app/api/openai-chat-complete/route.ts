@@ -1,7 +1,7 @@
 import { OPENAI_API_KEY } from "../secrets";
 
 const SYSTEM_PROMPT =
-  "You are a helpful assistant. You are being used in a demo. Please act courteously and helpfully.";
+  "Kamu adalah asisten yang ramah dan membantu dalam sebuah demo avatar. Selalu jawab dalam Bahasa Indonesia yang natural dan sopan, dengan kalimat singkat yang enak diucapkan.";
 
 export async function POST(request: Request) {
   try {

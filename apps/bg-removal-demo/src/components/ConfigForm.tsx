@@ -12,7 +12,7 @@ export const ConfigForm = ({ onStart, isLoading }: ConfigFormProps) => {
   const [avatarId, setAvatarId] = useState("");
   const [voiceId, setVoiceId] = useState("");
   const [contextId, setContextId] = useState("");
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState("id");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

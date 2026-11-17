@@ -1,5 +1,5 @@
-import { LiveAvatarDemo } from "../src/components/LiveAvatarDemo";
+import { ClassroomPage } from "../src/components/ClassroomPage";
 
 export default function Home() {
-  return <LiveAvatarDemo />;
+  return <ClassroomPage />;
 }

@@ -4,14 +4,51 @@ import {
   API_URL,
   AVATAR_ID,
   VOICE_ID,
-  LANGUAGE,
   IS_SANDBOX,
-  CONTEXT_ID,
+  CONTEXT_IDS,
 } from "../secrets";
+import {
+  DEFAULT_LANGUAGE,
+  isLanguageCode,
+} from "../../../src/liveavatar/languages";
+import {
+  SPEED_VALUES,
+  SpeechSpeed,
+  isSpeechSpeed,
+  isTtsProvider,
+} from "../../../src/liveavatar/speechSpeed";
 
 interface StartFullModeSessionRequestBody {
   pushToTalk?: boolean;
+  language?: string;
+  // Opsional, dipakai halaman /tester untuk mencoba avatar/voice lain.
+  avatarId?: string;
+  voiceId?: string;
+  speed?: string;
 }
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidOr = (value: unknown, fallback: string) =>
+  typeof value === "string" && UUID_RE.test(value) ? value : fallback;
+
+// voice_settings harus menyebut engine TTS-nya, dan rentang speed berbeda per
+// engine. Kita pakai engine pertama yang terdaftar untuk voice tersebut.
+const buildVoiceSettings = async (voiceId: string, speed: SpeechSpeed) => {
+  if (speed === "normal") return undefined;
+  const res = await fetch(`${API_URL}/v1/voices/${voiceId}`, {
+    headers: { "X-API-KEY": API_KEY },
+  });
+  if (!res.ok) {
+    throw new Error(`Gagal membaca engine voice (HTTP ${res.status})`);
+  }
+  const engines: unknown[] = (await res.json()).data?.voice_engines ?? [];
+  const provider = engines.find(isTtsProvider);
+  if (!provider) {
+    throw new Error("Voice ini tidak mendukung pengaturan kecepatan");
+  }
+  return { provider, speed: SPEED_VALUES[provider][speed] };
+};
 
 export async function POST(request: NextRequest) {
   let session_token = "";
@@ -21,6 +58,12 @@ export async function POST(request: NextRequest) {
       .json()
       .catch(() => ({}));
     const pushToTalk = body.pushToTalk === true;
+    const language = isLanguageCode(body.language)
+      ? body.language
+      : DEFAULT_LANGUAGE;
+    const voiceId = uuidOr(body.voiceId, VOICE_ID);
+    const speed = isSpeechSpeed(body.speed) ? body.speed : "normal";
+    const voiceSettings = await buildVoiceSettings(voiceId, speed);
     const res = await fetch(`${API_URL}/v1/sessions/token`, {
       method: "POST",
       headers: {
@@ -29,11 +72,12 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         mode: "FULL",
-        avatar_id: AVATAR_ID,
+        avatar_id: uuidOr(body.avatarId, AVATAR_ID),
         avatar_persona: {
-          voice_id: VOICE_ID,
-          context_id: CONTEXT_ID,
-          language: LANGUAGE,
+          voice_id: voiceId,
+          ...(voiceSettings && { voice_settings: voiceSettings }),
+          context_id: CONTEXT_IDS[language],
+          language,
         },
         ...(pushToTalk && { interactivity_type: "PUSH_TO_TALK" }),
         is_sandbox: IS_SANDBOX,

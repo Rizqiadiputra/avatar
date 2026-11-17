@@ -1,12 +1,28 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LiveAvatarSession } from "./LiveAvatarSession";
 import {
   SessionInteractivityMode,
   VoiceChatConfig,
 } from "@heygen/liveavatar-web-sdk";
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGES,
+  LanguageCode,
+} from "../liveavatar/languages";
+import {
+  DEFAULT_SPEECH_SPEED,
+  SPEECH_SPEEDS,
+  SpeechSpeed,
+} from "../liveavatar/speechSpeed";
+import {
+  loadClassSettings,
+  requestFullSessionToken,
+  saveClassSettings,
+} from "../liveavatar/classSettings";
 
 export type SessionMode = "FULL" | "FULL_PTT" | "LITE";
 
@@ -14,6 +30,31 @@ export const LiveAvatarDemo = () => {
   const router = useRouter();
   const [sessionToken, setSessionToken] = useState("");
   const [mode, setMode] = useState<SessionMode>("FULL");
+  const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE);
+  const [speed, setSpeed] = useState<SpeechSpeed>(DEFAULT_SPEECH_SPEED);
+  const [pushToTalk, setPushToTalk] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const lastSavedRef = useRef<string | null>(null);
+
+  // Muat pengaturan tersimpan, lalu simpan setiap kali berubah.
+  useEffect(() => {
+    const s = loadClassSettings();
+    setLanguage(s.language);
+    setSpeed(s.speed);
+    setPushToTalk(s.pushToTalk);
+    lastSavedRef.current = JSON.stringify(s);
+  }, []);
+  useEffect(() => {
+    const next = { language, speed, pushToTalk };
+    const json = JSON.stringify(next);
+    // Lewati render awal dan nilai yang baru saja dimuat.
+    if (lastSavedRef.current === null || lastSavedRef.current === json) return;
+    lastSavedRef.current = json;
+    saveClassSettings(next);
+    setSaved(true);
+    const t = setTimeout(() => setSaved(false), 1500);
+    return () => clearTimeout(t);
+  }, [language, speed, pushToTalk]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [manualToken, setManualToken] = useState("");
@@ -23,21 +64,9 @@ export const LiveAvatarDemo = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/start-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ pushToTalk }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        console.error("Failed to start full session", error);
-        setError(error.error);
-        return;
-      }
-      const { session_token } = await res.json();
-      setSessionToken(session_token);
+      setSessionToken(
+        await requestFullSessionToken({ pushToTalk, language, speed }),
+      );
       setMode(pushToTalk ? "FULL_PTT" : "FULL");
     } catch (error: unknown) {
       setError((error as Error).message);
@@ -96,12 +125,27 @@ export const LiveAvatarDemo = () => {
     <div className="w-full h-full flex flex-col items-center justify-center">
       {!sessionToken ? (
         <div className="w-full max-w-lg flex flex-col items-center gap-6 p-8">
+          <div className="w-full flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-sm text-gray-400 underline hover:text-white"
+            >
+              ← Kembali ke kelas
+            </Link>
+            <span
+              className={`text-xs text-green-400 transition-opacity ${saved ? "opacity-100" : "opacity-0"}`}
+              aria-live="polite"
+            >
+              Tersimpan
+            </span>
+          </div>
           <div className="text-center mb-2">
             <h1 className="text-2xl font-semibold text-white mb-1">
-              LiveAvatar Demo
+              Pengaturan
             </h1>
             <p className="text-sm text-gray-400">
-              Choose a session mode to get started
+              Bahasa, kecepatan, dan cara bicara di bawah dipakai halaman utama.
+              Tombol mode di bawahnya untuk mencoba mode lain.
             </p>
           </div>
 
@@ -110,6 +154,67 @@ export const LiveAvatarDemo = () => {
               {error}
             </div>
           )}
+
+          <div className="w-full flex flex-col gap-2">
+            <label
+              htmlFor="session-language"
+              className="text-xs text-gray-400 uppercase tracking-wider"
+            >
+              Bahasa avatar
+            </label>
+            <select
+              id="session-language"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+              disabled={loading}
+              className="w-full px-4 py-2.5 rounded-lg bg-white/5 text-white text-sm border border-white/10 focus:outline-none focus:border-white/30 transition-colors"
+            >
+              {(Object.keys(LANGUAGES) as LanguageCode[]).map((code) => (
+                <option key={code} value={code}>
+                  {LANGUAGES[code]}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500">
+              Berlaku untuk Full Mode: salam pembuka, materi, dan jawaban avatar
+              langsung memakai bahasa ini.
+            </p>
+            <label
+              htmlFor="session-speed"
+              className="text-xs text-gray-400 uppercase tracking-wider"
+            >
+              Kecepatan bicara
+            </label>
+            <select
+              id="session-speed"
+              value={speed}
+              onChange={(e) => setSpeed(e.target.value as SpeechSpeed)}
+              disabled={loading}
+              className="w-full px-4 py-2.5 rounded-lg bg-white/5 text-white text-sm border border-white/10 focus:outline-none focus:border-white/30 transition-colors"
+            >
+              {(Object.keys(SPEECH_SPEEDS) as SpeechSpeed[]).map((s) => (
+                <option key={s} value={s}>
+                  {SPEECH_SPEEDS[s]}
+                </option>
+              ))}
+            </select>
+            <label
+              htmlFor="session-ptt"
+              className="text-xs text-gray-400 uppercase tracking-wider"
+            >
+              Cara bicara di halaman utama
+            </label>
+            <select
+              id="session-ptt"
+              value={pushToTalk ? "ptt" : "free"}
+              onChange={(e) => setPushToTalk(e.target.value === "ptt")}
+              disabled={loading}
+              className="w-full px-4 py-2.5 rounded-lg bg-white/5 text-white text-sm border border-white/10 focus:outline-none focus:border-white/30 transition-colors"
+            >
+              <option value="free">Bicara bebas (Full Mode)</option>
+              <option value="ptt">Tekan untuk bicara (Push to Talk)</option>
+            </select>
+          </div>
 
           <div className="w-full flex flex-col gap-3">
             <button
@@ -176,6 +281,7 @@ export const LiveAvatarDemo = () => {
       ) : (
         <LiveAvatarSession
           mode={mode}
+          language={language}
           sessionAccessToken={sessionToken}
           voiceChatConfig={voiceChatConfig}
           onSessionStopped={onSessionStopped}

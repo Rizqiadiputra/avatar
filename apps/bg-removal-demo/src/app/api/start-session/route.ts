@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       avatar_id = process.env.DEFAULT_AVATAR_ID,
       voice_id = process.env.DEFAULT_VOICE_ID,
       context_id = process.env.DEFAULT_CONTEXT_ID,
-      language = process.env.DEFAULT_LANGUAGE || "en",
+      language = process.env.DEFAULT_LANGUAGE || "id",
       video_quality = "high",
       video_encoding = "H264",
       max_session_duration,
