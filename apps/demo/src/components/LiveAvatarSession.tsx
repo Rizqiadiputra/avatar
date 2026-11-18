@@ -14,6 +14,8 @@ import { useAvatarActions } from "../liveavatar/useAvatarActions";
 import { useLessonPlayer } from "../liveavatar/useLessonPlayer";
 import { DEFAULT_LANGUAGE, LanguageCode } from "../liveavatar/languages";
 import { useClassClosing } from "../liveavatar/useClassClosing";
+import { LESSON_SLIDES, pickSlide } from "../liveavatar/lessonSlides";
+import { LessonSlidePanel } from "./LessonSlidePanel";
 
 const formatClock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
@@ -117,7 +119,6 @@ const LiveAvatarSessionComponent: React.FC<{
   const chatMessages = useChatHistory();
   const videoRef = useRef<HTMLVideoElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [videoHeight, setVideoHeight] = useState<number>(0);
 
   useEffect(() => {
     if (sessionState === SessionState.DISCONNECTED) {
@@ -128,18 +129,6 @@ const LiveAvatarSessionComponent: React.FC<{
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
-
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setVideoHeight(entry.contentRect.height);
-      }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isStreamReady]);
 
   useEffect(() => {
     if (isStreamReady && videoRef.current) {
@@ -153,6 +142,13 @@ const LiveAvatarSessionComponent: React.FC<{
     }
   }, [startSession, sessionState]);
 
+  const { slide, key: slideKey } = pickSlide(
+    LESSON_SLIDES[language],
+    lesson.status,
+    lesson.current,
+    closing.status !== "open",
+  );
+
   const qualityColor =
     connectionQuality === "GOOD"
       ? "text-green-400"
@@ -162,78 +158,16 @@ const LiveAvatarSessionComponent: React.FC<{
 
   return (
     <div className="w-full max-w-[1400px] h-full flex flex-col gap-4 py-4">
-      {/* Video + Chat row */}
-      <div className="w-full flex flex-row items-start justify-center gap-4">
-        <div className="relative overflow-hidden rounded-lg flex flex-col items-center justify-center bg-black">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className={`w-full h-full object-contain transition-opacity ${
-              sessionState === SessionState.CONNECTED
-                ? "opacity-100"
-                : "opacity-0"
-            }`}
-          />
-          {sessionState !== SessionState.CONNECTED && (
-            <div className="absolute inset-0 flex items-center justify-center text-white/70 text-sm">
-              Waiting for avatar and agent to join…
-            </div>
-          )}
-          {/* Overlay status badges */}
-          <div className="absolute top-3 left-3 flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  sessionState === SessionState.CONNECTED
-                    ? "bg-green-400"
-                    : sessionState === SessionState.CONNECTING
-                      ? "bg-yellow-400 animate-pulse"
-                      : "bg-gray-500"
-                }`}
-              />
-              <span className="text-xs text-white/70 font-medium uppercase tracking-wider">
-                {sessionState}
-              </span>
-            </div>
-            <span
-              className={`text-xs font-medium uppercase tracking-wider px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm ${qualityColor}`}
-            >
-              {connectionQuality}
-            </span>
-          </div>
-          {/* Talking indicators */}
-          <div className="absolute bottom-3 left-3 flex items-center gap-2">
-            {(mode === "FULL" || mode === "FULL_PTT") && (
-              <div
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-sm transition-colors ${
-                  isUserTalking
-                    ? "bg-blue-500/30 border border-blue-400/30"
-                    : "bg-black/40"
-                }`}
-              >
-                <div
-                  className={`w-2 h-2 rounded-full transition-colors ${isUserTalking ? "bg-blue-400 animate-pulse" : "bg-gray-500"}`}
-                />
-                <span className="text-xs text-white/70 font-medium">You</span>
-              </div>
-            )}
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-sm transition-colors ${
-                isAvatarTalking
-                  ? "bg-purple-500/30 border border-purple-400/30"
-                  : "bg-black/40"
-              }`}
-            >
-              <div
-                className={`w-2 h-2 rounded-full transition-colors ${isAvatarTalking ? "bg-purple-400 animate-pulse" : "bg-gray-500"}`}
-              />
-              <span className="text-xs text-white/70 font-medium">Avatar</span>
-            </div>
-          </div>
-          {/* Lesson progress */}
+      {/* Panel materi | (Avatar + Chat) */}
+      <div className="grid w-full gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <LessonSlidePanel
+          slide={slide}
+          slideKey={slideKey}
+          courseTitle="Data Analysis Fundamentals"
+        >
+          {/* Status & kontrol materi */}
           {sessionState === SessionState.CONNECTED && (
-            <div className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-xs text-white/80">
+            <div className="flex w-full flex-wrap items-center gap-2">
               {closing.status !== "open" ? (
                 <span>
                   {closing.reason
@@ -307,92 +241,165 @@ const LiveAvatarSessionComponent: React.FC<{
                 )}
             </div>
           )}
-          {/* Stop button */}
-          <button
-            className="absolute bottom-3 right-3 px-4 py-2 text-sm font-medium rounded-lg bg-red-500/80 text-white hover:bg-red-500 backdrop-blur-sm transition-colors"
-            onClick={() => stopSession()}
-          >
-            End Session
-          </button>
-        </div>
+          {sessionState !== SessionState.CONNECTED && (
+            <span className="text-white/50">Menunggu pengajar bergabung…</span>
+          )}
+        </LessonSlidePanel>
 
-        {/* Chat History */}
-        {(mode === "FULL" || mode === "FULL_PTT") && (
-          <div
-            className="w-[350px] shrink-0 overflow-hidden border border-white/10 rounded-lg bg-white/5 flex flex-col"
-            style={{ height: videoHeight > 0 ? videoHeight : 400 }}
-          >
-            <div className="px-4 py-3 border-b border-white/10 shrink-0">
-              <p className="font-medium text-sm text-white">Chat</p>
-            </div>
-            <div
-              className="flex-1 overflow-y-auto p-3 flex flex-col gap-2"
-              style={{ scrollbarWidth: "none" }}
-            >
-              {chatMessages.length === 0 && (
-                <p className="text-gray-500 text-xs text-center mt-8">
-                  Transcriptions will appear here
-                </p>
-              )}
-              {chatMessages.map((msg, i) => (
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="relative w-full aspect-video overflow-hidden rounded-lg flex flex-col items-center justify-center bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className={`w-full h-full object-contain transition-opacity ${
+                sessionState === SessionState.CONNECTED
+                  ? "opacity-100"
+                  : "opacity-0"
+              }`}
+            />
+            {sessionState !== SessionState.CONNECTED && (
+              <div className="absolute inset-0 flex items-center justify-center text-white/70 text-sm">
+                Waiting for avatar and agent to join…
+              </div>
+            )}
+            {/* Overlay status badges */}
+            <div className="absolute top-3 left-3 flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm">
                 <div
-                  key={i}
-                  className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                  className={`w-2 h-2 rounded-full ${
+                    sessionState === SessionState.CONNECTED
+                      ? "bg-green-400"
+                      : sessionState === SessionState.CONNECTING
+                        ? "bg-yellow-400 animate-pulse"
+                        : "bg-gray-500"
+                  }`}
+                />
+                <span className="text-xs text-white/70 font-medium uppercase tracking-wider">
+                  {sessionState}
+                </span>
+              </div>
+              <span
+                className={`text-xs font-medium uppercase tracking-wider px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm ${qualityColor}`}
+              >
+                {connectionQuality}
+              </span>
+            </div>
+            {/* Talking indicators */}
+            <div className="absolute bottom-3 left-3 flex items-center gap-2">
+              {(mode === "FULL" || mode === "FULL_PTT") && (
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-sm transition-colors ${
+                    isUserTalking
+                      ? "bg-blue-500/30 border border-blue-400/30"
+                      : "bg-black/40"
+                  }`}
                 >
                   <div
-                    className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
-                      msg.sender === "user"
-                        ? "bg-blue-500/20 text-blue-100 border border-blue-500/10"
-                        : "bg-white/10 text-gray-200 border border-white/5"
-                    }`}
-                  >
-                    <span className="font-medium text-xs uppercase tracking-wider opacity-50 block mb-0.5">
-                      {msg.sender === "user" ? "You" : "Avatar"}
-                    </span>
-                    <p className="leading-relaxed">{msg.message}</p>
-                  </div>
+                    className={`w-2 h-2 rounded-full transition-colors ${isUserTalking ? "bg-blue-400 animate-pulse" : "bg-gray-500"}`}
+                  />
+                  <span className="text-xs text-white/70 font-medium">You</span>
                 </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-            <div className="shrink-0 px-3 py-3 border-t border-white/10 flex flex-col gap-2">
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && message.trim()) {
-                    sendMessage(message);
-                    setMessage("");
-                  }
-                }}
-                placeholder="Type a message..."
-                className="w-full px-4 py-2 rounded-lg bg-white/5 text-white text-sm border border-white/10 focus:outline-none focus:border-white/30 placeholder-gray-500 transition-colors"
-              />
-              <div className="flex items-center gap-2">
-                <ActionButton
-                  onClick={() => {
-                    sendMessage(message);
-                    setMessage("");
-                  }}
-                  variant="primary"
-                  size="sm"
-                >
-                  Send
-                </ActionButton>
-                <ActionButton
-                  onClick={() => {
-                    repeat(message);
-                    setMessage("");
-                  }}
-                  size="sm"
-                >
-                  Repeat
-                </ActionButton>
+              )}
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-sm transition-colors ${
+                  isAvatarTalking
+                    ? "bg-purple-500/30 border border-purple-400/30"
+                    : "bg-black/40"
+                }`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full transition-colors ${isAvatarTalking ? "bg-purple-400 animate-pulse" : "bg-gray-500"}`}
+                />
+                <span className="text-xs text-white/70 font-medium">
+                  Avatar
+                </span>
               </div>
             </div>
+            {/* Stop button */}
+            <button
+              className="absolute bottom-3 right-3 px-4 py-2 text-sm font-medium rounded-lg bg-red-500/80 text-white hover:bg-red-500 backdrop-blur-sm transition-colors"
+              onClick={() => stopSession()}
+            >
+              End Session
+            </button>
           </div>
-        )}
+
+          {/* Chat History */}
+          {(mode === "FULL" || mode === "FULL_PTT") && (
+            <div className="w-full h-[340px] overflow-hidden border border-white/10 rounded-lg bg-white/5 flex flex-col">
+              <div className="px-4 py-3 border-b border-white/10 shrink-0">
+                <p className="font-medium text-sm text-white">Chat</p>
+              </div>
+              <div
+                className="flex-1 overflow-y-auto p-3 flex flex-col gap-2"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {chatMessages.length === 0 && (
+                  <p className="text-gray-500 text-xs text-center mt-8">
+                    Transcriptions will appear here
+                  </p>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+                        msg.sender === "user"
+                          ? "bg-blue-500/20 text-blue-100 border border-blue-500/10"
+                          : "bg-white/10 text-gray-200 border border-white/5"
+                      }`}
+                    >
+                      <span className="font-medium text-xs uppercase tracking-wider opacity-50 block mb-0.5">
+                        {msg.sender === "user" ? "You" : "Avatar"}
+                      </span>
+                      <p className="leading-relaxed">{msg.message}</p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="shrink-0 px-3 py-3 border-t border-white/10 flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && message.trim()) {
+                      sendMessage(message);
+                      setMessage("");
+                    }
+                  }}
+                  placeholder="Type a message..."
+                  className="w-full px-4 py-2 rounded-lg bg-white/5 text-white text-sm border border-white/10 focus:outline-none focus:border-white/30 placeholder-gray-500 transition-colors"
+                />
+                <div className="flex items-center gap-2">
+                  <ActionButton
+                    onClick={() => {
+                      sendMessage(message);
+                      setMessage("");
+                    }}
+                    variant="primary"
+                    size="sm"
+                  >
+                    Send
+                  </ActionButton>
+                  <ActionButton
+                    onClick={() => {
+                      repeat(message);
+                      setMessage("");
+                    }}
+                    size="sm"
+                  >
+                    Repeat
+                  </ActionButton>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Controls */}

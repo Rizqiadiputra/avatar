@@ -38,6 +38,9 @@ export const useLessonPlayer = (
   const indexRef = useRef(0);
   const mutedByLessonRef = useRef(false);
   const openingStartedRef = useRef(false);
+  // Salam pembuka bisa selesai sebelum sesi berstatus CONNECTED. Kalau begitu,
+  // materi ditunda sampai sesi siap (lihat efek di bawah).
+  const [openingEndedEarly, setOpeningEndedEarly] = useState(false);
 
   const updateStatus = (s: LessonStatus) => {
     statusRef.current = s;
@@ -147,9 +150,12 @@ export const useLessonPlayer = (
       if (statusRef.current === "idle") openingStartedRef.current = true;
     };
     const onSpeakEnded = () => {
-      if (session.state !== SessionState.CONNECTED) return;
-      if (statusRef.current === "playing") playNext();
-      else if (autoStart && statusRef.current === "idle") start();
+      if (statusRef.current === "playing") {
+        playNext(); // playNext sendiri berhenti dengan aman kalau sesi putus
+      } else if (autoStart && statusRef.current === "idle") {
+        if (session.state === SessionState.CONNECTED) start();
+        else setOpeningEndedEarly(true);
+      }
     };
     session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, onSpeakStarted);
     session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, onSpeakEnded);
@@ -158,6 +164,11 @@ export const useLessonPlayer = (
       session.off(AgentEventsEnum.AVATAR_SPEAK_ENDED, onSpeakEnded);
     };
   }, [sessionRef, playNext, autoStart, start]);
+
+  // Salam pembuka sudah selesai sebelum sesi siap: mulai materi begitu siap.
+  useEffect(() => {
+    if (openingEndedEarly && ready && statusRef.current === "idle") start();
+  }, [openingEndedEarly, ready, start]);
 
   // Cadangan: kalau salam pembuka belum mulai terdengar beberapa detik setelah
   // sesi siap, mulai materi tanpa menunggu.
