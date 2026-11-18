@@ -6,6 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(request: NextRequest) {
   const password = process.env.DEMO_PASSWORD;
   if (!password) return NextResponse.next();
+  // Landing page boleh dibuka publik; kelas, tester, settings, dan API tetap
+  // dikunci karena memakai kredit LiveAvatar.
+  if (request.nextUrl.pathname === "/") return NextResponse.next();
 
   const header = request.headers.get("authorization") ?? "";
   if (header.startsWith("Basic ")) {

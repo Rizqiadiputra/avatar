@@ -127,7 +127,7 @@ export const LiveAvatarDemo = () => {
         <div className="w-full max-w-lg flex flex-col items-center gap-6 p-8">
           <div className="w-full flex items-center justify-between">
             <Link
-              href="/"
+              href="/kelas"
               className="text-sm text-gray-400 underline hover:text-white"
             >
               ← Kembali ke kelas
