@@ -34,8 +34,23 @@ const uuidOr = (value: unknown, fallback: string) =>
 
 // voice_settings harus menyebut engine TTS-nya, dan rentang speed berbeda per
 // engine. Kita pakai engine pertama yang terdaftar untuk voice tersebut.
-const buildVoiceSettings = async (voiceId: string, speed: SpeechSpeed) => {
-  if (speed === "normal") return undefined;
+//
+// Semua voice publik LiveAvatar berbahasa asli Inggris, jadi untuk kelas
+// Bahasa Indonesia kita paksa model ElevenLabs multilingual (pelafalan
+// non-Inggris lebih baik daripada flash) dan sedikit turunkan similarity_boost
+// supaya aksen Inggris dari voice aslinya tidak terlalu terbawa.
+const ID_ELEVENLABS_SETTINGS = {
+  model: "eleven_multilingual_v2",
+  similarity_boost: 0.6,
+};
+
+const buildVoiceSettings = async (
+  voiceId: string,
+  speed: SpeechSpeed,
+  language: string,
+) => {
+  const tuneForIndonesian = language === "id";
+  if (speed === "normal" && !tuneForIndonesian) return undefined;
   const res = await fetch(`${API_URL}/v1/voices/${voiceId}`, {
     headers: { "X-API-KEY": API_KEY },
   });
@@ -45,9 +60,16 @@ const buildVoiceSettings = async (voiceId: string, speed: SpeechSpeed) => {
   const engines: unknown[] = (await res.json()).data?.voice_engines ?? [];
   const provider = engines.find(isTtsProvider);
   if (!provider) {
+    if (speed === "normal") return undefined;
     throw new Error("Voice ini tidak mendukung pengaturan kecepatan");
   }
-  return { provider, speed: SPEED_VALUES[provider][speed] };
+  return {
+    provider,
+    ...(speed !== "normal" && { speed: SPEED_VALUES[provider][speed] }),
+    ...(tuneForIndonesian &&
+      provider === "elevenLabs" &&
+      ID_ELEVENLABS_SETTINGS),
+  };
 };
 
 export async function POST(request: NextRequest) {
@@ -63,7 +85,7 @@ export async function POST(request: NextRequest) {
       : DEFAULT_LANGUAGE;
     const voiceId = uuidOr(body.voiceId, VOICE_ID);
     const speed = isSpeechSpeed(body.speed) ? body.speed : "normal";
-    const voiceSettings = await buildVoiceSettings(voiceId, speed);
+    const voiceSettings = await buildVoiceSettings(voiceId, speed, language);
     const res = await fetch(`${API_URL}/v1/sessions/token`, {
       method: "POST",
       headers: {
