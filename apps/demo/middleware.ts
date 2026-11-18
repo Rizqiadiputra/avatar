@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
 
   return new NextResponse("Butuh password", {
     status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Arunativ Demo"' },
+    headers: { "WWW-Authenticate": 'Basic realm="Guru AI Demo"' },
   });
 }
 
