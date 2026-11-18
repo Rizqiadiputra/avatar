@@ -9,6 +9,7 @@ const font = Plus_Jakarta_Sans({
 });
 
 const CTA_HREF = "/kelas";
+const EXPLORE_HREF = "#jelajahi-kelas";
 
 /* ------------------------------------------------------------------ */
 /* Ikon (inline SVG, stroke mengikuti currentColor)                    */
@@ -25,7 +26,10 @@ type IconName =
   | "play"
   | "spark"
   | "shield"
-  | "chart";
+  | "chart"
+  | "briefcase"
+  | "building"
+  | "arrow";
 
 const PATHS: Record<IconName, string> = {
   avatar:
@@ -46,6 +50,11 @@ const PATHS: Record<IconName, string> = {
   shield:
     "M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6L12 3Zm-3.5 9 2.5 2.5 4.5-5",
   chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  briefcase:
+    "M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M4 7h16a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1Zm-1 6h18",
+  building:
+    "M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h3a1 1 0 0 1 1 1v11M2 21h20M8 7h4M8 11h4M8 15h4",
+  arrow: "M5 12h14m-5-5 5 5-5 5",
 };
 
 const Icon = ({
@@ -73,17 +82,69 @@ const Icon = ({
 /* Konten                                                              */
 /* ------------------------------------------------------------------ */
 const NAV = [
-  { href: "#fitur", label: "Fitur" },
-  { href: "#cara-kerja", label: "Cara kerja" },
-  { href: "#pilihan-kelas", label: "Pilihan kelas" },
+  { href: "#untuk-siapa", label: "Untuk siapa" },
+  { href: "#kurikulum", label: "Kurikulum" },
+  { href: "#jelajahi-kelas", label: "Kelas" },
+  { href: "#pilihan-kelas", label: "Paket" },
   { href: "#faq", label: "FAQ" },
 ];
 
 const HERO_POINTS = [
-  "Kelas interaktif",
-  "Bisa bertanya melalui suara dan chat",
-  "Materi terstruktur dan ditinjau praktisi",
-  "Belajar dari mana saja",
+  "Untuk profesional dan karyawan",
+  "Kurikulum AI-generated, human-validated",
+  "Tanya jawab langsung lewat suara dan chat",
+  "Latihan, studi kasus, dan evaluasi",
+];
+
+const AUDIENCES: { icon: IconName; title: string; body: string }[] = [
+  {
+    icon: "briefcase",
+    title: "Profesional",
+    body: "Menambah keahlian yang dibutuhkan untuk naik peran, pindah karier, atau menangani tanggung jawab baru.",
+  },
+  {
+    icon: "users",
+    title: "Karyawan dan fresh graduate",
+    body: "Membangun kompetensi kerja inti dengan materi terstruktur yang bisa diikuti di sela jam kerja.",
+  },
+  {
+    icon: "building",
+    title: "Tim dan perusahaan",
+    body: "Mendukung program pengembangan karyawan dengan kelas yang konsisten dan mudah diikuti banyak peserta.",
+  },
+];
+
+/** Katalog kelas. Hanya kelas berstatus "available" yang bisa dicoba di demo. */
+const CATALOG: {
+  title: string;
+  level: string;
+  body: string;
+  available: boolean;
+}[] = [
+  {
+    title: "Data Analysis Fundamentals",
+    level: "Pemula",
+    body: "Dari jenis data, data cleaning, dan SQL dasar hingga visualisasi untuk mengambil keputusan.",
+    available: true,
+  },
+  {
+    title: "Komunikasi Efektif di Tempat Kerja",
+    level: "Pemula",
+    body: "Menyampaikan ide dengan jelas, memberi umpan balik, dan berkomunikasi lintas tim.",
+    available: false,
+  },
+  {
+    title: "Excel untuk Analisis Bisnis",
+    level: "Pemula–Menengah",
+    body: "Formula, pivot table, dan dashboard sederhana untuk laporan kerja sehari-hari.",
+    available: false,
+  },
+  {
+    title: "Project Management Fundamentals",
+    level: "Pemula",
+    body: "Merencanakan lingkup, jadwal, risiko, dan koordinasi tim dalam proyek.",
+    available: false,
+  },
 ];
 
 /** Contoh kelas yang ditampilkan di landing page. */
@@ -101,14 +162,14 @@ const SAMPLE_COURSE = {
 
 const FEATURES: { icon: IconName; title: string; body: string }[] = [
   {
-    icon: "avatar",
-    title: "AI Lecturer",
-    body: "Belajar bersama pengajar AI dengan avatar, suara, dan metode penyampaian materi yang interaktif. Rasakan pengalaman mengikuti kelas tanpa harus bertemu langsung dengan pengajar.",
+    icon: "book",
+    title: "Kurikulum Berbasis Kompetensi",
+    body: "Setiap kelas disusun dari learning objectives yang jelas dan relevan dengan kebutuhan kerja, lalu divalidasi oleh praktisi.",
   },
   {
-    icon: "book",
-    title: "Kurikulum Terstruktur",
-    body: "Materi pembelajaran dikembangkan dengan bantuan AI, disusun berdasarkan learning objectives, dan ditinjau oleh akademisi atau praktisi yang kompeten di bidangnya.",
+    icon: "avatar",
+    title: "Kelas Live yang Dipandu",
+    body: "Pengajar AI membawakan materi secara bertahap, lengkap dengan slide yang tersinkron, seperti mengikuti kelas sungguhan.",
   },
   {
     icon: "mic",
@@ -127,8 +188,8 @@ const FEATURES: { icon: IconName; title: string; body: string }[] = [
   },
   {
     icon: "clock",
-    title: "Fleksibel",
-    body: "Ikuti kelas sesuai jadwal yang tersedia. Belajar dapat disesuaikan dengan aktivitas dan kesibukan profesional Anda.",
+    title: "Sesuai Ritme Kerja",
+    body: "Pilih jadwal kelas grup atau atur sesi privat sendiri, menyesuaikan kesibukan profesional Anda.",
   },
 ];
 
@@ -151,29 +212,58 @@ const FLOW = [
   },
 ];
 
-const PILLARS: { icon: IconName; title: string; body: string }[] = [
+/** Alur penyusunan kurikulum: AI-generated, human-validated. */
+const CURRICULUM_STEPS: {
+  icon: IconName;
+  tag: string;
+  title: string;
+  body: string;
+}[] = [
   {
-    icon: "avatar",
-    title: "Pengajaran berbasis AI",
-    body: "Pengajar AI memimpin kelas, menjelaskan materi, dan menjawab pertanyaan.",
+    icon: "target",
+    tag: "Desain",
+    title: "Learning objectives ditetapkan",
+    body: "Kompetensi yang ingin dicapai dirumuskan lebih dulu, lalu dipecah menjadi modul.",
   },
   {
-    icon: "book",
-    title: "Kurikulum terstruktur",
-    body: "Materi disusun berdasarkan learning objectives yang jelas.",
+    icon: "spark",
+    tag: "AI-generated",
+    title: "AI menyusun draf materi",
+    body: "AI membuat naskah, slide, contoh, latihan, dan bank soal berdasarkan objectives tersebut.",
   },
   {
     icon: "shield",
-    title: "Divalidasi oleh manusia",
-    body: "Ditinjau akademisi atau praktisi yang kompeten di bidangnya.",
+    tag: "Human-validated",
+    title: "Praktisi meninjau dan memvalidasi",
+    body: "Akademisi atau praktisi di bidangnya memeriksa akurasi, relevansi, dan contoh kasus sebelum materi dipakai.",
+  },
+  {
+    icon: "chart",
+    tag: "Perbaikan",
+    title: "Diperbarui secara berkala",
+    body: "Materi direvisi berdasarkan hasil evaluasi dan masukan peserta.",
   },
 ];
 
-const PACKAGES = [
+const PACKAGES: {
+  name: string;
+  icon: IconName;
+  desc: string;
+  mechanics: [string, string][];
+  points: string[];
+  cta: string;
+  highlight: boolean;
+}[] = [
   {
     name: "Kelas Grup",
-    icon: "users" as IconName,
+    icon: "users",
     desc: "Belajar bersama peserta lain dalam satu sesi pembelajaran dengan jadwal yang telah ditentukan.",
+    mechanics: [
+      ["Jadwal", "Sesi live terjadwal, daftar lalu masuk di jam kelas"],
+      ["Peserta", "Beberapa peserta dalam satu ruang kelas"],
+      ["Bertanya", "Angkat tangan, lalu pengajar memberi giliran"],
+      ["Chat", "Chat kelas dibagikan ke semua peserta"],
+    ],
     points: [
       "Interaksi bersama peserta lain",
       "Tanya jawab langsung dengan pengajar AI",
@@ -185,8 +275,14 @@ const PACKAGES = [
   },
   {
     name: "Kelas Privat 1:1",
-    icon: "avatar" as IconName,
+    icon: "avatar",
     desc: "Pengalaman belajar personal dengan pengajar AI yang mengikuti kebutuhan dan tempo belajar Anda.",
+    mechanics: [
+      ["Jadwal", "Mulai kapan saja sesuai waktu Anda"],
+      ["Peserta", "Hanya Anda dan pengajar AI"],
+      ["Bertanya", "Bisa menyela dan bertanya kapan saja"],
+      ["Tempo", "Penjelasan menyesuaikan pemahaman Anda"],
+    ],
     points: [
       "Pembelajaran personal",
       "Fokus pada kebutuhan kompetensi",
@@ -201,7 +297,7 @@ const PACKAGES = [
 const FAQS = [
   {
     q: "Apa itu Guru AI?",
-    a: "Guru AI adalah platform pembelajaran interaktif yang menggunakan AI sebagai pengajar. Pengajar AI menyampaikan materi melalui avatar dan suara, serta dapat menjawab pertanyaan peserta melalui percakapan langsung.",
+    a: "Guru AI adalah platform professional learning untuk meningkatkan kompetensi kerja. Kelasnya berlangsung live, dipandu pengajar AI yang menyampaikan materi tervalidasi dan menjawab pertanyaan peserta secara langsung.",
   },
   {
     q: "Apa bedanya dengan chatbot AI?",
@@ -217,7 +313,11 @@ const FAQS = [
   },
   {
     q: "Siapa yang cocok menggunakan Guru AI?",
-    a: "Guru AI ditujukan bagi siapa saja yang ingin mengembangkan kompetensi, mempelajari keterampilan baru, atau meningkatkan kemampuan profesional untuk mendukung karier.",
+    a: "Guru AI ditujukan bagi profesional dan karyawan yang ingin meningkatkan kompetensi kerja, termasuk fresh graduate dan tim perusahaan yang menjalankan program pengembangan karyawan.",
+  },
+  {
+    q: "Kelas apa yang bisa saya coba sekarang?",
+    a: "Saat ini kelas demo yang tersedia adalah Data Analysis Fundamentals. Kelas lain di katalog sedang disiapkan dan akan dibuka bertahap.",
   },
   {
     q: "Apa yang dibutuhkan untuk mengikuti kelas?",
@@ -241,6 +341,21 @@ const PrimaryButton = ({
   >
     {children}
   </Link>
+);
+
+const SecondaryButton = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <a
+    href={EXPLORE_HREF}
+    className={`inline-flex items-center justify-center gap-2 rounded-xl border border-teal-700/25 bg-white px-6 py-3.5 text-[15px] font-semibold text-teal-800 transition hover:-translate-y-0.5 hover:border-teal-700/50 hover:bg-teal-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 ${className}`}
+  >
+    {children}
+  </a>
 );
 
 const SectionHeading = ({
@@ -419,7 +534,7 @@ export default function LandingPage() {
             href={CTA_HREF}
             className="shrink-0 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
           >
-            Coba Kelas Gratis
+            Coba Kelas Demo
           </Link>
         </div>
       </header>
@@ -435,25 +550,27 @@ export default function LandingPage() {
             <div>
               <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-700/15 bg-white px-3 py-1.5 text-xs font-semibold text-teal-800 shadow-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Kelas live bersama pengajar AI
+                Professional learning untuk karyawan dan profesional
               </p>
               <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem]">
-                Tingkatkan skill dan kompetensi bersama{" "}
-                <span className="whitespace-nowrap">
-                  <span className="text-teal-700">pengajar AI</span>.
-                </span>
+                Tingkatkan kompetensi kerja Anda,{" "}
+                <span className="text-teal-700">selangkah demi selangkah</span>.
               </h1>
               <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-500">
-                Ikuti kelas interaktif dengan pengajar AI yang membawakan materi
-                secara terstruktur, menjawab pertanyaan secara langsung, dan
-                membantu Anda memahami keterampilan baru untuk kebutuhan
-                profesional.
+                Kelas live dengan kurikulum berbasis kompetensi yang disusun AI
+                dan divalidasi praktisi. Pengajar AI memandu materi, menjawab
+                pertanyaan Anda secara langsung, dan mengukur pemahaman lewat
+                latihan.
               </p>
-              <div className="mt-8">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <PrimaryButton>
                   <Icon name="play" className="h-4 w-4" />
-                  Coba Kelas Gratis
+                  Coba Kelas Demo
                 </PrimaryButton>
+                <SecondaryButton>
+                  Jelajahi Kelas
+                  <Icon name="arrow" className="h-4 w-4" />
+                </SecondaryButton>
               </div>
               <ul className="mt-8 grid gap-x-6 gap-y-2.5 text-sm text-slate-600 sm:grid-cols-2">
                 {HERO_POINTS.map((t) => (
@@ -470,12 +587,40 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Untuk siapa */}
+        <section id="untuk-siapa" className="scroll-mt-16 pt-24">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+            <SectionHeading
+              eyebrow="Untuk siapa"
+              title="Dirancang untuk profesional yang ingin terus berkembang"
+            />
+            <div className="mt-14 grid gap-5 md:grid-cols-3">
+              {AUDIENCES.map((a) => (
+                <div
+                  key={a.title}
+                  className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-teal-50/60 p-6"
+                >
+                  <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-teal-700 text-white">
+                    <Icon name={a.icon} className="h-5 w-5" />
+                  </span>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {a.title}
+                  </h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-slate-500">
+                    {a.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Fitur */}
         <section id="fitur" className="scroll-mt-16 py-24">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionHeading
               eyebrow="Fitur unggulan"
-              title="Pengalaman belajar yang lebih interaktif"
+              title="Belajar terarah, bukan sekadar menonton video"
             />
             <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map((f) => (
@@ -548,47 +693,116 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Mengapa Guru AI */}
-        <section className="py-24">
-          <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+        {/* Kurikulum: AI-generated, human-validated */}
+        <section id="kurikulum" className="scroll-mt-16 py-24">
+          <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.15fr] lg:items-center">
             <div className="border-l-4 border-teal-700 pl-6">
               <p className="text-sm font-semibold uppercase tracking-wider text-emerald-600">
-                Mengapa Guru AI?
+                Kurikulum
               </p>
               <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-                Belajar lebih fleksibel, tanpa kehilangan pengalaman interaktif.
+                AI-generated, human-validated.
               </h2>
               <div className="mt-6 flex flex-col gap-4 text-[17px] leading-relaxed text-slate-500">
                 <p>
-                  Mengembangkan kompetensi baru membutuhkan waktu, akses
-                  terhadap materi berkualitas, dan kesempatan untuk bertanya.
+                  AI membantu kami menyusun materi dengan cepat dan konsisten.
+                  Namun tidak ada materi yang sampai ke kelas sebelum diperiksa
+                  manusia.
                 </p>
                 <p>
-                  Guru AI menghadirkan pengalaman pembelajaran yang
-                  menggabungkan pengajaran berbasis AI, kurikulum terstruktur,
-                  dan validasi materi oleh manusia yang kompeten.
+                  Setiap modul ditinjau oleh akademisi atau praktisi yang
+                  kompeten di bidangnya, untuk memastikan isinya akurat, relevan
+                  dengan kebutuhan kerja, dan memakai contoh yang tepat.
                 </p>
                 <p>
-                  Anda dapat belajar tanpa harus datang ke ruang kelas atau
-                  mengikuti seluruh aktivitas pembelajaran secara tatap muka.
+                  Saat tanya jawab, pengajar AI menjawab dengan berpegang pada
+                  materi yang sudah divalidasi tersebut.
                 </p>
               </div>
             </div>
-            <div className="flex flex-col gap-4">
-              {PILLARS.map((p) => (
-                <div
-                  key={p.title}
-                  className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-teal-50/60 p-5"
+            <ol className="flex flex-col gap-4">
+              {CURRICULUM_STEPS.map((c, i) => (
+                <li
+                  key={c.title}
+                  className={`flex items-start gap-4 rounded-2xl border p-5 ${
+                    c.tag === "Human-validated"
+                      ? "border-teal-700/30 bg-teal-50"
+                      : "border-slate-200 bg-white"
+                  }`}
                 >
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white">
-                    <Icon name={p.icon} className="h-5 w-5" />
+                    <Icon name={c.icon} className="h-5 w-5" />
                   </span>
                   <div>
-                    <h3 className="font-bold text-slate-900">{p.title}</h3>
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+                      {String(i + 1).padStart(2, "0")} · {c.tag}
+                    </p>
+                    <h3 className="mt-0.5 font-bold text-slate-900">
+                      {c.title}
+                    </h3>
                     <p className="mt-1 text-[15px] leading-relaxed text-slate-500">
-                      {p.body}
+                      {c.body}
                     </p>
                   </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Jelajahi kelas */}
+        <section
+          id="jelajahi-kelas"
+          className="scroll-mt-16 bg-gradient-to-b from-emerald-50/70 to-teal-50/40 py-24"
+        >
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+            <SectionHeading
+              eyebrow="Jelajahi kelas"
+              title="Kelas untuk kompetensi kerja yang paling dibutuhkan"
+            />
+            <div className="mt-14 grid gap-5 sm:grid-cols-2">
+              {CATALOG.map((c) => (
+                <div
+                  key={c.title}
+                  className={`flex flex-col rounded-2xl border bg-white p-6 ${
+                    c.available
+                      ? "border-teal-700/30 shadow-xl shadow-teal-900/5"
+                      : "border-slate-200"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                    <span
+                      className={`rounded-full px-2.5 py-1 ${
+                        c.available
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {c.available ? "Demo tersedia" : "Segera hadir"}
+                    </span>
+                    <span className="rounded-full bg-teal-50 px-2.5 py-1 text-teal-800">
+                      {c.level}
+                    </span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-slate-900">
+                    {c.title}
+                  </h3>
+                  <p className="mt-2 flex-1 text-[15px] leading-relaxed text-slate-500">
+                    {c.body}
+                  </p>
+                  {c.available ? (
+                    <Link
+                      href={CTA_HREF}
+                      className="mt-5 inline-flex items-center gap-2 self-start rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+                    >
+                      <Icon name="play" className="h-4 w-4" />
+                      Coba Kelas Demo
+                    </Link>
+                  ) : (
+                    <span className="mt-5 text-sm font-medium text-slate-400">
+                      Sedang disiapkan
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -634,6 +848,31 @@ export default function LandingPage() {
                   >
                     {p.desc}
                   </p>
+                  <dl
+                    className={`mt-6 grid gap-2.5 rounded-2xl p-4 text-sm ${
+                      p.highlight ? "bg-white/10" : "bg-teal-50/60"
+                    }`}
+                  >
+                    {p.mechanics.map(([k, v]) => (
+                      <div
+                        key={k}
+                        className="grid grid-cols-[5.5rem_1fr] gap-2"
+                      >
+                        <dt
+                          className={`font-semibold ${p.highlight ? "text-emerald-300" : "text-teal-800"}`}
+                        >
+                          {k}
+                        </dt>
+                        <dd
+                          className={
+                            p.highlight ? "text-teal-50" : "text-slate-600"
+                          }
+                        >
+                          {v}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
                   <ul className="mt-6 flex flex-1 flex-col gap-3 text-[15px]">
                     {p.points.map((pt) => (
                       <li key={pt} className="flex items-start gap-2.5">
@@ -662,6 +901,26 @@ export default function LandingPage() {
                   </Link>
                 </div>
               ))}
+            </div>
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+              <p className="text-sm font-semibold uppercase tracking-wider text-emerald-600">
+                Alur setiap sesi
+              </p>
+              <ol className="mt-4 grid gap-3 text-[15px] text-slate-600 sm:grid-cols-4">
+                {[
+                  "Pembukaan dan tujuan sesi",
+                  "Materi dengan slide tersinkron",
+                  "Tanya jawab lewat suara atau chat",
+                  "Kuis singkat dan ringkasan",
+                ].map((t, i) => (
+                  <li key={t} className="flex items-start gap-2.5">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-xs font-bold text-white">
+                      {i + 1}
+                    </span>
+                    {t}
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
         </section>
@@ -707,19 +966,28 @@ export default function LandingPage() {
               aria-hidden
             />
             <h2 className="relative mx-auto max-w-2xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Mulai perjalanan belajar Anda bersama Guru AI.
+              Siap meningkatkan kompetensi kerja Anda?
             </h2>
             <p className="relative mx-auto mt-4 max-w-xl text-lg text-teal-100">
-              Kembangkan keterampilan baru melalui pengalaman belajar yang
-              interaktif, fleksibel, dan terarah.
+              Rasakan langsung kelas Data Analysis Fundamentals, atau lihat
+              kelas lain yang sedang kami siapkan.
             </p>
-            <Link
-              href={CTA_HREF}
-              className="relative mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-7 py-4 text-[15px] font-bold text-teal-800 shadow-xl transition hover:-translate-y-0.5 hover:bg-teal-50"
-            >
-              <Icon name="play" className="h-4 w-4" />
-              Coba Kelas Gratis
-            </Link>
+            <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href={CTA_HREF}
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-4 text-[15px] font-bold text-teal-800 shadow-xl transition hover:-translate-y-0.5 hover:bg-teal-50"
+              >
+                <Icon name="play" className="h-4 w-4" />
+                Coba Kelas Demo
+              </Link>
+              <a
+                href={EXPLORE_HREF}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/40 px-7 py-4 text-[15px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
+              >
+                Jelajahi Kelas
+                <Icon name="arrow" className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </section>
       </main>
