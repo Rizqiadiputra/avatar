@@ -30,14 +30,6 @@ export type LessonSlides = {
   summary: Slide;
 };
 
-const MODULES = [
-  "Introduction to Data Analysis",
-  "Understanding Data Types",
-  "Data Cleaning Fundamentals",
-  "Introduction to SQL",
-  "Basic Data Visualization",
-];
-
 export const LESSON_SLIDES: Record<LanguageCode, LessonSlides> = {
   id: {
     cover: {
@@ -48,12 +40,6 @@ export const LESSON_SLIDES: Record<LanguageCode, LessonSlides> = {
       meta: ["Pengajar AI", "Kelas live", "Tanya jawab suara & chat"],
     },
     paragraphs: [
-      {
-        kind: "agenda",
-        title: "Peta kelas",
-        items: MODULES,
-        active: 0,
-      },
       {
         kind: "flow",
         title: "Apa itu analisis data?",
@@ -96,12 +82,6 @@ export const LESSON_SLIDES: Record<LanguageCode, LessonSlides> = {
       meta: ["AI lecturer", "Live class", "Voice & chat Q&A"],
     },
     paragraphs: [
-      {
-        kind: "agenda",
-        title: "Course map",
-        items: MODULES,
-        active: 0,
-      },
       {
         kind: "flow",
         title: "What is data analysis?",

@@ -12,13 +12,11 @@ import type { LanguageCode } from "./languages";
 // dipakai pengajar saat menjawab pertanyaan.
 export const LESSON_SCRIPTS: Record<LanguageCode, string[]> = {
   id: [
-    "Hari ini kita masuk ke Modul 1, Introduction to Data Analysis.",
-    "Analisis data adalah proses mengolah data untuk menjawab pertanyaan bisnis, mulai dari pertanyaan yang jelas sampai insight yang bisa ditindaklanjuti.",
-    "Silakan ajukan pertanyaan seputar analisis data.",
+    "Di Modul 1, analisis data berarti mengolah data untuk menjawab pertanyaan bisnis: dari pertanyaan, data, olah, sampai insight.",
+    "Silakan ajukan pertanyaan.",
   ],
   en: [
-    "Today we are starting Module 1, Introduction to Data Analysis.",
-    "Data analysis is the process of turning data into answers to business questions, from a clear question all the way to insights people can act on.",
-    "Feel free to ask any questions about data analysis.",
+    "In Module 1, data analysis means turning data into answers to business questions: question, data, process, insight.",
+    "Feel free to ask a question.",
   ],
 };
