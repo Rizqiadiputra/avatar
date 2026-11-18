@@ -11,13 +11,11 @@ import type { LanguageCode } from "./languages";
 
 export type LessonStatus = "idle" | "playing" | "paused" | "done";
 
-const OPENING_FALLBACK_MS = 8000;
-
 /**
  * Membawakan skrip materi (sesuai bahasa) paragraf demi paragraf: paragraf
  * berikutnya dikirim setelah avatar selesai bicara (AVATAR_SPEAK_ENDED).
- * Materi otomatis dimulai setelah salam pembuka dari context selesai, supaya
- * tidak bertabrakan. Mikrofon dimute selama materi agar suara peserta tidak
+ * Materi (termasuk salam pembuka) otomatis dimulai begitu sesi siap dan audio
+ * sudah tersambung ke browser, supaya salamnya terdengar. Mikrofon dimute selama materi agar suara peserta tidak
  * memotong, lalu dibuka lagi untuk tanya jawab.
  */
 export const useLessonPlayer = (
@@ -37,10 +35,6 @@ export const useLessonPlayer = (
   const statusRef = useRef<LessonStatus>("idle");
   const indexRef = useRef(0);
   const mutedByLessonRef = useRef(false);
-  const openingStartedRef = useRef(false);
-  // Salam pembuka bisa selesai sebelum sesi berstatus CONNECTED. Kalau begitu,
-  // materi ditunda sampai sesi siap (lihat efek di bawah).
-  const [openingEndedEarly, setOpeningEndedEarly] = useState(false);
 
   const updateStatus = (s: LessonStatus) => {
     statusRef.current = s;
@@ -140,44 +134,23 @@ export const useLessonPlayer = (
     updateStatus("done");
   }, [script]);
 
-  // Lanjut ke paragraf berikutnya setiap kali avatar selesai bicara. Ucapan
-  // pertama yang selesai saat masih idle adalah salam pembuka context, jadi
-  // materi dimulai tepat setelahnya.
+  // Lanjut ke paragraf berikutnya setiap kali avatar selesai bicara.
   useEffect(() => {
     const session = sessionRef.current;
     if (!session) return;
-    const onSpeakStarted = () => {
-      if (statusRef.current === "idle") openingStartedRef.current = true;
-    };
     const onSpeakEnded = () => {
-      if (statusRef.current === "playing") {
-        playNext(); // playNext sendiri berhenti dengan aman kalau sesi putus
-      } else if (autoStart && statusRef.current === "idle") {
-        if (session.state === SessionState.CONNECTED) start();
-        else setOpeningEndedEarly(true);
-      }
+      // playNext sendiri berhenti dengan aman kalau sesi putus
+      if (statusRef.current === "playing") playNext();
     };
-    session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, onSpeakStarted);
     session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, onSpeakEnded);
     return () => {
-      session.off(AgentEventsEnum.AVATAR_SPEAK_STARTED, onSpeakStarted);
       session.off(AgentEventsEnum.AVATAR_SPEAK_ENDED, onSpeakEnded);
     };
-  }, [sessionRef, playNext, autoStart, start]);
+  }, [sessionRef, playNext]);
 
-  // Salam pembuka sudah selesai sebelum sesi siap: mulai materi begitu siap.
+  // Mulai materi (diawali salam pembuka) begitu sesi siap.
   useEffect(() => {
-    if (openingEndedEarly && ready && statusRef.current === "idle") start();
-  }, [openingEndedEarly, ready, start]);
-
-  // Cadangan: kalau salam pembuka belum mulai terdengar beberapa detik setelah
-  // sesi siap, mulai materi tanpa menunggu.
-  useEffect(() => {
-    if (!autoStart || !ready || statusRef.current !== "idle") return;
-    const t = setTimeout(() => {
-      if (statusRef.current === "idle" && !openingStartedRef.current) start();
-    }, OPENING_FALLBACK_MS);
-    return () => clearTimeout(t);
+    if (autoStart && ready && statusRef.current === "idle") start();
   }, [autoStart, ready, start]);
 
   return {

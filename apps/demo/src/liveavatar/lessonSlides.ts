@@ -30,16 +30,27 @@ export type LessonSlides = {
   summary: Slide;
 };
 
+const ID_COVER: Slide = {
+  kind: "cover",
+  eyebrow: "Modul 1 dari 5",
+  title: "Introduction to Data Analysis",
+  subtitle: "Data Analysis Fundamentals · From Data to Insight",
+  meta: ["Pengajar AI", "Kelas live", "Tanya jawab suara & chat"],
+};
+
+const EN_COVER: Slide = {
+  kind: "cover",
+  eyebrow: "Module 1 of 5",
+  title: "Introduction to Data Analysis",
+  subtitle: "Data Analysis Fundamentals · From Data to Insight",
+  meta: ["AI lecturer", "Live class", "Voice & chat Q&A"],
+};
+
 export const LESSON_SLIDES: Record<LanguageCode, LessonSlides> = {
   id: {
-    cover: {
-      kind: "cover",
-      eyebrow: "Modul 1 dari 5",
-      title: "Introduction to Data Analysis",
-      subtitle: "Data Analysis Fundamentals · From Data to Insight",
-      meta: ["Pengajar AI", "Kelas live", "Tanya jawab suara & chat"],
-    },
+    cover: ID_COVER,
     paragraphs: [
+      ID_COVER, // salam pembuka
       {
         kind: "flow",
         title: "Apa itu analisis data?",
@@ -74,14 +85,9 @@ export const LESSON_SLIDES: Record<LanguageCode, LessonSlides> = {
     },
   },
   en: {
-    cover: {
-      kind: "cover",
-      eyebrow: "Module 1 of 5",
-      title: "Introduction to Data Analysis",
-      subtitle: "Data Analysis Fundamentals · From Data to Insight",
-      meta: ["AI lecturer", "Live class", "Voice & chat Q&A"],
-    },
+    cover: EN_COVER,
     paragraphs: [
+      EN_COVER, // greeting
       {
         kind: "flow",
         title: "What is data analysis?",
