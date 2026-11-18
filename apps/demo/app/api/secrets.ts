@@ -17,8 +17,10 @@ export const VOICE_ID = "a8cfe15c-5a94-4ae2-9338-8e6ff5eccdee"; // Aida
 // (opening_text) dan jawaban LLM langsung memakai bahasa yang dipilih.
 // Daftar bahasa yang tampil di UI ada di src/liveavatar/languages.ts.
 export const CONTEXT_IDS: Record<LanguageCode, string> = {
-  id: "1ad3e706-a5f0-4769-aa76-f1dca0ca24dc", // Pengajar Komunikasi Efektif (ID)
-  en: "5a9e2b9b-228a-44cc-924d-c3aee1edf2fc", // Effective Communication Instructor (EN)
+  id: "1ddc72c8-374d-44f0-a9e8-6eaef0d8fe0c", // Pengajar Data Analysis Fundamentals (ID)
+  en: "b04c9d0e-c962-4704-9ee4-7e1544067fb3", // Data Analysis Fundamentals Instructor (EN)
+  // Context lama (Komunikasi Efektif) masih ada di akun LiveAvatar:
+  // ID 1ad3e706-a5f0-4769-aa76-f1dca0ca24dc, EN 5a9e2b9b-228a-44cc-924d-c3aee1edf2fc
 };
 
 // LITE MODE Customizations

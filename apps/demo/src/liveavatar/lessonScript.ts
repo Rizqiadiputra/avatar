@@ -6,17 +6,19 @@ import type { LanguageCode } from "./languages";
 // dan materi baru dimulai setelah salam itu selesai.
 // Setelah paragraf terakhir, avatar masuk ke sesi tanya jawab (dijawab oleh LLM
 // sesuai context bahasa yang dipilih).
+// Kelas: Data Analysis Fundamentals, Modul 1 (Introduction to Data Analysis).
+// Sengaja sangat singkat: sesi sandbox hanya ~60 detik, jadi harus masih ada
+// waktu untuk tanya jawab. Contoh dan detail lain ada di context (prompt) dan
+// dipakai pengajar saat menjawab pertanyaan.
 export const LESSON_SCRIPTS: Record<LanguageCode, string[]> = {
   id: [
-    "Hari ini, kita akan mempelajari komunikasi efektif di lingkungan kerja.",
-    "Sekarang, mari kita lanjutkan ke sesi tanya jawab. Silakan ajukan pertanyaan terkait materi yang telah kita pelajari.",
+    "Hari ini kita masuk ke Modul 1, Introduction to Data Analysis.",
+    "Analisis data adalah proses mengolah data untuk menjawab pertanyaan bisnis, mulai dari pertanyaan yang jelas sampai insight yang bisa ditindaklanjuti.",
+    "Silakan ajukan pertanyaan seputar analisis data.",
   ],
   en: [
-    "Today, we will learn about effective communication in the workplace.",
-    "Effective communication is not only about sharing information. It also means making sure the message is clearly understood, listening actively, and understanding what the other person needs.",
-    "At work, this skill helps teams collaborate, solve problems, and build good relationships with customers.",
-    "For example, before offering a solution to a customer, we need to understand the challenges they face, so the solution actually fits.",
-    "In short, effective communication takes clarity, good listening, and understanding the person you are talking to.",
-    "Now, let's move on to questions and answers. Feel free to ask anything about what we have covered.",
+    "Today we are starting Module 1, Introduction to Data Analysis.",
+    "Data analysis is the process of turning data into answers to business questions, from a clear question all the way to insights people can act on.",
+    "Feel free to ask any questions about data analysis.",
   ],
 };

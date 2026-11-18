@@ -44,8 +44,8 @@ type HistoryItem = {
 };
 
 const SAMPLE_TEXT: Record<LanguageCode, string> = {
-  id: "Halo, selamat datang. Hari ini kita akan belajar komunikasi efektif di tempat kerja, mulai dari mendengarkan secara aktif sampai memahami kebutuhan pelanggan.",
-  en: "Hello and welcome. Today we will learn about effective communication at work, from active listening to understanding what customers need.",
+  id: "Halo, selamat datang. Hari ini kita akan belajar dasar analisis data, mulai dari memahami jenis data sampai menyampaikan insight yang bisa ditindaklanjuti.",
+  en: "Hello and welcome. Today we will learn the basics of data analysis, from understanding data types to sharing insights people can act on.",
 };
 
 const HISTORY_KEY = "voice-tester-history";

@@ -27,13 +27,13 @@ export const CLOSING_SCRIPTS: Record<
   id: {
     time_up: "Waktu kita sudah habis. Terima kasih, sampai jumpa minggu depan!",
     finished:
-      "Baik, materi dan sesi tanya jawab kita hari ini sudah selesai. Ingat, komunikasi efektif butuh kejelasan, kemampuan mendengarkan, dan pemahaman terhadap lawan bicara. Terima kasih sudah mengikuti, sampai jumpa di materi berikutnya!",
+      "Baik, Modul 1 kita sudah selesai. Ingat, analisis data selalu dimulai dari pertanyaan yang jelas. Sampai jumpa di modul berikutnya, Understanding Data Types!",
     idle: "Sepertinya sudah tidak ada pertanyaan lagi. Kalau begitu, kita cukupkan sesi hari ini. Silakan pelajari kembali materinya, dan sampai jumpa di materi berikutnya!",
   },
   en: {
     time_up: "We're out of time. Thank you, see you next week!",
     finished:
-      "Alright, that wraps up today's material and Q&A. Remember, effective communication takes clarity, good listening, and understanding the person you are talking to. Thank you for joining, and see you in the next lesson!",
+      "Alright, that wraps up Module 1. Remember, good data analysis always starts with a clear question. See you in the next module, Understanding Data Types!",
     idle: "It looks like there are no more questions. In that case, let's wrap up today's session. Please review the material, and see you in the next lesson!",
   },
 };

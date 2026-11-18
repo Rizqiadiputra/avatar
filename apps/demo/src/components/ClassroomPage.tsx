@@ -67,10 +67,13 @@ export const ClassroomPage = () => {
     <div className="w-full max-w-md flex flex-col items-center gap-6 p-8 text-center">
       <div>
         <h1 className="text-2xl font-semibold text-white mb-1">
-          Kelas Komunikasi Efektif
+          Data Analysis Fundamentals
         </h1>
+        <p className="mb-3 text-sm font-medium text-gray-300">
+          Modul 1 · Introduction to Data Analysis
+        </p>
         <p className="text-sm text-gray-400">
-          Dosen avatar akan membuka kelas, membawakan materi, lalu membuka sesi
+          Pengajar AI akan membuka kelas, membawakan materi, lalu membuka sesi
           tanya jawab.
         </p>
       </div>
