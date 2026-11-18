@@ -194,7 +194,7 @@ const SECOND_COURSE = {
   ],
 };
 
-/** Tiga pilar utama Guru AI. */
+/** Tiga pilar utama Arunativ. */
 const PILLARS: { icon: IconName; title: string; body: string }[] = [
   {
     icon: "avatar",
@@ -316,12 +316,12 @@ const PACKAGES: {
 
 const FAQS = [
   {
-    q: "Apa itu Guru AI?",
-    a: "Guru AI adalah platform pembelajaran profesional berbasis AI. Kelasnya berlangsung live, dipandu AI Instructor yang menyampaikan materi tervalidasi dan menjawab pertanyaan peserta secara langsung.",
+    q: "Apa itu Arunativ?",
+    a: "Arunativ adalah platform pembelajaran profesional berbasis AI. Kelasnya berlangsung live, dipandu AI Instructor yang menyampaikan materi tervalidasi dan menjawab pertanyaan peserta secara langsung.",
   },
   {
     q: "Apa bedanya dengan chatbot AI?",
-    a: "Chatbot umumnya merespons ketika pengguna bertanya. Guru AI dirancang untuk memimpin proses pembelajaran, mulai dari membuka kelas, menjelaskan materi secara terstruktur, memberikan contoh, hingga mengadakan sesi tanya jawab.",
+    a: "Chatbot umumnya merespons ketika pengguna bertanya. Arunativ dirancang untuk memimpin proses pembelajaran, mulai dari membuka kelas, menjelaskan materi secara terstruktur, memberikan contoh, hingga mengadakan sesi tanya jawab.",
   },
   {
     q: "Siapa yang menyusun materi pembelajaran?",
@@ -332,8 +332,8 @@ const FAQS = [
     a: "Ya. Anda dapat mengajukan pertanyaan melalui mikrofon atau chat selama sesi pembelajaran.",
   },
   {
-    q: "Siapa yang cocok menggunakan Guru AI?",
-    a: "Guru AI ditujukan bagi profesional, karyawan, dan individu yang ingin mengembangkan keterampilan profesional, termasuk lulusan baru.",
+    q: "Siapa yang cocok menggunakan Arunativ?",
+    a: "Arunativ ditujukan bagi profesional, karyawan, dan individu yang ingin mengembangkan keterampilan profesional, termasuk lulusan baru.",
   },
   {
     q: "Kelas apa yang bisa saya coba sekarang?",
@@ -411,7 +411,7 @@ const Logo = () => (
     </span>
     <span className="leading-none">
       <span className="block text-lg font-extrabold tracking-tight text-slate-900">
-        Guru<span className="text-teal-700"> AI</span>
+        Arunativ
       </span>
       <span className="hidden text-[11px] font-medium text-slate-400 sm:block">
         Pembelajaran profesional berbasis AI
@@ -786,7 +786,7 @@ export default function LandingPage() {
         <section id="pilar" className="scroll-mt-16 pt-24">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionHeading
-              eyebrow="Mengapa Guru AI"
+              eyebrow="Mengapa Arunativ"
               title="Platform pembelajaran profesional yang didukung AI"
             />
             <div className="mt-14 grid gap-5 md:grid-cols-3">
@@ -1197,12 +1197,12 @@ export default function LandingPage() {
       <footer className="border-t border-slate-100">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-slate-400 sm:flex-row sm:px-6">
           <span className="font-bold text-slate-700">
-            Guru<span className="text-teal-700"> AI</span>
+            Arunativ
             <span className="ml-2 font-medium italic text-slate-400">
               Terus belajar, terus berkembang.
             </span>
           </span>
-          <span>© {new Date().getFullYear()} Guru AI</span>
+          <span>© {new Date().getFullYear()} Arunativ</span>
         </div>
       </footer>
     </div>
