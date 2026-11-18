@@ -7,7 +7,7 @@ export const AVATAR_ID = "65f9e3c9-d48b-4118-b73a-4ae2e3cbb8f0"; // June HR
 
 // When true, we will call everything in Sandbox mode.
 // Useful for integration and development.
-export const IS_SANDBOX = true;
+export const IS_SANDBOX = false;
 
 // FULL MODE Customizations
 // Voice: Aida
