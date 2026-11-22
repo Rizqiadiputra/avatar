@@ -147,12 +147,18 @@ export const useClassClosing = (
         (!CLASS_DURATION_MINUTES || max < CLASS_DURATION_MINUTES * 60),
     );
     lastActivityRef.current = startedAt;
+    // Sesi pendek (mis. sandbox 60 detik) jangan dipotong 30 detik untuk
+    // penutup, supaya masih ada waktu tanya jawab: 15% durasi, minimal 8 detik.
+    const lead = Math.min(
+      TIME_UP_LEAD_SECONDS,
+      Math.max(8, Math.round(totalSeconds * 0.15)),
+    );
 
     const tick = () => {
       const elapsed = (Date.now() - startedAt) / 1000;
       const remaining = Math.max(0, Math.round(totalSeconds - elapsed));
       setRemainingSeconds(remaining);
-      if (remaining <= TIME_UP_LEAD_SECONDS) close("time_up");
+      if (remaining <= lead) close("time_up");
     };
     tick();
     const id = setInterval(tick, 1000);

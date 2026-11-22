@@ -148,6 +148,18 @@ export const useLessonPlayer = (
     };
   }, [sessionRef, playNext]);
 
+  // Voice chat bisa baru aktif setelah materi dimulai: mute saat itu juga
+  // supaya suara peserta tidak memotong materi.
+  useEffect(() => {
+    if (status !== "playing" || voiceChatState !== VoiceChatState.ACTIVE)
+      return;
+    const voiceChat = sessionRef.current?.voiceChat;
+    if (voiceChat && !voiceChat.isMuted && !mutedByLessonRef.current) {
+      mutedByLessonRef.current = true;
+      voiceChat.mute().catch(console.warn);
+    }
+  }, [status, voiceChatState, sessionRef]);
+
   // Mulai materi (diawali salam pembuka) begitu sesi siap.
   useEffect(() => {
     if (autoStart && ready && statusRef.current === "idle") start();
