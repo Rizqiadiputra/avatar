@@ -72,6 +72,24 @@ const buildVoiceSettings = async (
   };
 };
 
+const readErrorMessage = async (res: Response) => {
+  const fallback = "Failed to retrieve session token";
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      const resp = await res.json();
+      if (resp.data && resp.data.length > 0) return resp.data[0].message;
+      return resp.error || resp.message || fallback;
+    } catch (e) {
+      console.error("Failed to parse error response:", e);
+      return fallback;
+    }
+  }
+  const text = await res.text();
+  console.log("Error response (text):", text);
+  return text || fallback;
+};
+
 export async function POST(request: NextRequest) {
   let session_token = "";
   let session_id = "";
@@ -86,51 +104,45 @@ export async function POST(request: NextRequest) {
     const voiceId = uuidOr(body.voiceId, VOICE_ID);
     const speed = isSpeechSpeed(body.speed) ? body.speed : "normal";
     const voiceSettings = await buildVoiceSettings(voiceId, speed, language);
-    const res = await fetch(`${API_URL}/v1/sessions/token`, {
-      method: "POST",
-      headers: {
-        "X-API-KEY": API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        mode: "FULL",
-        avatar_id: uuidOr(body.avatarId, AVATAR_ID),
-        avatar_persona: {
-          voice_id: voiceId,
-          ...(voiceSettings && { voice_settings: voiceSettings }),
-          context_id: CONTEXT_IDS[language],
-          language,
+    const requestToken = (avatarId: string) =>
+      fetch(`${API_URL}/v1/sessions/token`, {
+        method: "POST",
+        headers: {
+          "X-API-KEY": API_KEY,
+          "Content-Type": "application/json",
         },
-        ...(pushToTalk && { interactivity_type: "PUSH_TO_TALK" }),
-        is_sandbox: IS_SANDBOX,
-      }),
-    });
+        body: JSON.stringify({
+          mode: "FULL",
+          avatar_id: avatarId,
+          avatar_persona: {
+            voice_id: voiceId,
+            ...(voiceSettings && { voice_settings: voiceSettings }),
+            context_id: CONTEXT_IDS[language],
+            language,
+          },
+          ...(pushToTalk && { interactivity_type: "PUSH_TO_TALK" }),
+          is_sandbox: IS_SANDBOX,
+        }),
+      });
+
+    const avatarId = uuidOr(body.avatarId, AVATAR_ID);
+    let res = await requestToken(avatarId);
+    let errorMessage = res.ok ? "" : await readErrorMessage(res);
+
+    // Sandbox hanya menerima sebagian avatar (mis. avatar guru Daniel/Emily
+    // ditolak). Di sandbox, pakai avatar bawaan tapi tetap dengan suara guru,
+    // supaya alur kelas tetap bisa dites tanpa memakai kredit.
+    if (
+      !res.ok &&
+      IS_SANDBOX &&
+      avatarId !== AVATAR_ID &&
+      /not supported in sandbox/i.test(errorMessage)
+    ) {
+      res = await requestToken(AVATAR_ID);
+      errorMessage = res.ok ? "" : await readErrorMessage(res);
+    }
 
     if (!res.ok) {
-      // Check if response is JSON before parsing
-      const contentType = res.headers.get("content-type");
-      let errorMessage = "Failed to retrieve session token";
-
-      if (contentType && contentType.includes("application/json")) {
-        try {
-          const resp = await res.json();
-          if (resp.data && resp.data.length > 0) {
-            errorMessage = resp.data[0].message;
-          } else if (resp.error) {
-            errorMessage = resp.error;
-          } else if (resp.message) {
-            errorMessage = resp.message;
-          }
-        } catch (e) {
-          console.error("Failed to parse error response:", e);
-        }
-      } else {
-        // If it's not JSON, try to get the text
-        const text = await res.text();
-        console.log("Error response (text):", text);
-        errorMessage = text || errorMessage;
-      }
-
       return new Response(JSON.stringify({ error: errorMessage }), {
         status: res.status,
       });

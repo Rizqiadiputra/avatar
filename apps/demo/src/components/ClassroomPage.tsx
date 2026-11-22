@@ -1,27 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   SessionInteractivityMode,
   VoiceChatConfig,
 } from "@heygen/liveavatar-web-sdk";
-import { LiveAvatarSession } from "./LiveAvatarSession";
-import { LANGUAGES } from "../liveavatar/languages";
-import { SPEECH_SPEEDS } from "../liveavatar/speechSpeed";
+import { ClassroomSession } from "./ClassroomSession";
+import { Onboarding } from "./Onboarding";
 import {
   ClassSettings,
   loadClassSettings,
   requestFullSessionToken,
+  saveClassSettings,
 } from "../liveavatar/classSettings";
+import { CLASSES, LearnerProfile, labelOf } from "../liveavatar/learnerProfile";
+import { findTutor } from "../liveavatar/tutors";
 
 /**
- * Halaman utama: langsung masuk kelas Full Mode dengan pengaturan dari
- * /settings. Butuh satu klik karena browser hanya mengizinkan suara avatar
- * diputar setelah ada interaksi pengguna.
+ * Halaman kelas: layar masuk (bahasa pengantar → jalur → halaman setup),
+ * lalu kelas Full Mode. Bahasa diambil dari profil; kecepatan suara dan
+ * push-to-talk diatur di "Opsi lainnya" (disimpan sama seperti /settings).
+ * Butuh satu klik "Mulai Kelas" karena browser hanya mengizinkan suara avatar
+ * diputar setelah ada interaksi.
  */
 export const ClassroomPage = () => {
   const [settings, setSettings] = useState<ClassSettings | null>(null);
+  const [profile, setProfile] = useState<LearnerProfile | null>(null);
   const [sessionToken, setSessionToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +42,20 @@ export const ClassroomPage = () => {
     [settings?.pushToTalk],
   );
 
-  const startClass = async () => {
+  const startClass = async (learner: LearnerProfile) => {
     if (!settings) return;
     setLoading(true);
     setError(null);
     try {
-      setSessionToken(await requestFullSessionToken(settings));
+      const tutor = findTutor(learner.tutorKey);
+      const token = await requestFullSessionToken({
+        ...settings,
+        language: learner.language,
+        avatarId: tutor?.avatarId,
+        voiceId: tutor?.voiceId,
+      });
+      setProfile(learner);
+      setSessionToken(token);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -51,11 +63,13 @@ export const ClassroomPage = () => {
     }
   };
 
-  if (sessionToken && settings) {
+  if (sessionToken && settings && profile) {
     return (
-      <LiveAvatarSession
-        mode={settings.pushToTalk ? "FULL_PTT" : "FULL"}
-        language={settings.language}
+      <ClassroomSession
+        pushToTalk={settings.pushToTalk}
+        language={profile.language}
+        tutor={findTutor(profile.tutorKey)}
+        courseTitle={labelOf(CLASSES, profile.classKey, profile.language)}
         sessionAccessToken={sessionToken}
         voiceChatConfig={voiceChatConfig}
         onSessionStopped={() => setSessionToken("")}
@@ -64,43 +78,15 @@ export const ClassroomPage = () => {
   }
 
   return (
-    <div className="w-full max-w-md flex flex-col items-center gap-6 p-8 text-center">
-      <div>
-        <h1 className="text-2xl font-semibold text-white mb-1">
-          Data Analysis Fundamentals
-        </h1>
-        <p className="mb-3 text-sm font-medium text-gray-300">
-          Modul 1 · Introduction to Data Analysis
-        </p>
-        <p className="text-sm text-gray-400">
-          Pengajar AI akan membuka kelas, membawakan materi, lalu membuka sesi
-          tanya jawab.
-        </p>
-      </div>
-
-      {error && (
-        <div className="w-full px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-left">
-          {error}
-        </div>
-      )}
-
-      <button
-        onClick={startClass}
-        disabled={!settings || loading}
-        className="w-full px-6 py-3 rounded-lg bg-white text-zinc-900 font-semibold text-base hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? "Memulai kelas…" : "Mulai kelas"}
-      </button>
-
-      {settings && (
-        <p className="text-xs text-gray-500">
-          {LANGUAGES[settings.language]} · {SPEECH_SPEEDS[settings.speed]} ·{" "}
-          {settings.pushToTalk ? "Push to talk" : "Bicara bebas"} ·{" "}
-          <Link href="/settings" className="underline hover:text-white">
-            Pengaturan
-          </Link>
-        </p>
-      )}
-    </div>
+    <Onboarding
+      onStart={startClass}
+      loading={loading || !settings}
+      error={error}
+      settings={settings}
+      onSettingsChange={(next) => {
+        setSettings(next);
+        saveClassSettings(next);
+      }}
+    />
   );
 };

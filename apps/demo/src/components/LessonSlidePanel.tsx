@@ -180,7 +180,7 @@ export const LessonSlidePanel: React.FC<{
   courseTitle: string;
   children?: React.ReactNode;
 }> = ({ slide, slideKey, courseTitle, children }) => (
-  <div className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+  <div className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
     <div className="relative flex-1 bg-gradient-to-br from-white via-white to-teal-50/70 p-6 sm:p-10">
       <p className="absolute left-6 top-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:left-10">
         {courseTitle}
@@ -190,7 +190,7 @@ export const LessonSlidePanel: React.FC<{
       </div>
     </div>
     {children && (
-      <div className="flex min-h-[44px] flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 px-4 py-2 text-xs text-white/80">
+      <div className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-2 border-t border-slate-100 bg-slate-50/80 px-4 py-2.5 text-sm text-slate-600">
         {children}
       </div>
     )}

@@ -51,7 +51,7 @@ export const saveClassSettings = (settings: ClassSettings) => {
 
 /** Minta session token Full Mode dari server. */
 export const requestFullSessionToken = async (
-  settings: ClassSettings,
+  settings: ClassSettings & { avatarId?: string; voiceId?: string },
 ): Promise<string> => {
   const res = await fetch("/api/start-session", {
     method: "POST",

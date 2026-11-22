@@ -180,7 +180,7 @@ const LiveAvatarSessionComponent: React.FC<{
                     Materi {lesson.current}/{lesson.total}
                   </span>
                   <button
-                    className="underline hover:text-white"
+                    className="underline hover:text-teal-700"
                     onClick={lesson.skip}
                   >
                     Lewati
@@ -192,13 +192,13 @@ const LiveAvatarSessionComponent: React.FC<{
                     Materi dijeda {lesson.current}/{lesson.total}
                   </span>
                   <button
-                    className="underline hover:text-white"
+                    className="underline hover:text-teal-700"
                     onClick={lesson.resume}
                   >
                     Lanjutkan
                   </button>
                   <button
-                    className="underline hover:text-white"
+                    className="underline hover:text-teal-700"
                     onClick={lesson.skip}
                   >
                     Lewati
@@ -208,13 +208,13 @@ const LiveAvatarSessionComponent: React.FC<{
                 <>
                   <span>Sesi tanya jawab</span>
                   <button
-                    className="underline hover:text-white"
+                    className="underline hover:text-teal-700"
                     onClick={lesson.start}
                   >
                     Ulangi materi
                   </button>
                   <button
-                    className="underline hover:text-white"
+                    className="underline hover:text-teal-700"
                     onClick={() => closing.close("finished")}
                   >
                     Akhiri kelas
@@ -226,8 +226,8 @@ const LiveAvatarSessionComponent: React.FC<{
               {closing.status === "open" &&
                 closing.remainingSeconds !== null && (
                   <span
-                    className={`tabular-nums pl-2 border-l border-white/20 ${
-                      closing.remainingSeconds <= 120 ? "text-yellow-300" : ""
+                    className={`tabular-nums pl-2 border-l border-slate-300 ${
+                      closing.remainingSeconds <= 120 ? "text-amber-600" : ""
                     }`}
                     title={
                       closing.limitedBySession
@@ -242,7 +242,7 @@ const LiveAvatarSessionComponent: React.FC<{
             </div>
           )}
           {sessionState !== SessionState.CONNECTED && (
-            <span className="text-white/50">Menunggu pengajar bergabung…</span>
+            <span className="text-slate-400">Menunggu pengajar bergabung…</span>
           )}
         </LessonSlidePanel>
 
