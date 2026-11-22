@@ -115,7 +115,7 @@ const SlideBody: React.FC<{ slide: Slide }> = ({ slide }) => {
       return (
         <div className="flex h-full flex-col justify-center">
           <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-            Mikrofon terbuka
+            {slide.badge}
           </span>
           <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {slide.title}

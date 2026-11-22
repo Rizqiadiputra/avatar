@@ -21,7 +21,13 @@ export type Slide =
       lead: string;
       steps: { label: string; desc: string }[];
     }
-  | { kind: "qa"; title: string; lead: string; prompts: string[] }
+  | {
+      kind: "qa";
+      badge: string;
+      title: string;
+      lead: string;
+      prompts: string[];
+    }
   | { kind: "summary"; title: string; points: string[]; next: string };
 
 export type LessonSlides = {
@@ -64,6 +70,7 @@ export const LESSON_SLIDES: Record<LanguageCode, LessonSlides> = {
       },
       {
         kind: "qa",
+        badge: "Mikrofon terbuka",
         title: "Sesi tanya jawab",
         lead: "Tanyakan lewat mikrofon atau chat. Contoh pertanyaan:",
         prompts: [
@@ -101,6 +108,7 @@ export const LESSON_SLIDES: Record<LanguageCode, LessonSlides> = {
       },
       {
         kind: "qa",
+        badge: "Mic open",
         title: "Q&A session",
         lead: "Ask by voice or chat. For example:",
         prompts: [

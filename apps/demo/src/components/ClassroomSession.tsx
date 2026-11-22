@@ -16,6 +16,7 @@ import type { LanguageCode } from "../liveavatar/languages";
 import { useClassClosing } from "../liveavatar/useClassClosing";
 import { LESSON_SLIDES, pickSlide } from "../liveavatar/lessonSlides";
 import type { Tutor } from "../liveavatar/tutors";
+import type { ClassRecord, EndReason } from "../liveavatar/classHistory";
 import { LessonSlidePanel } from "./LessonSlidePanel";
 import { GuruShell } from "./GuruShell";
 
@@ -31,6 +32,11 @@ const T = {
     timeLeft: "Sisa waktu",
     sessionLimit: "Dibatasi durasi maksimum sesi (mode uji: ±60 detik)",
     connecting: (name: string) => `Menyambungkan ke ${name}…`,
+    connectFailed: (name: string) =>
+      `${name} belum bisa tersambung. Pastikan izin mikrofon sudah diberikan, lalu coba lagi.`,
+    backToSetup: "Kembali",
+    micPermission:
+      "Kalau browser meminta izin mikrofon, klik Izinkan agar kelas bisa dimulai.",
     preparing: "Menyiapkan materi…",
     lessonProgress: (i: number, n: number) => `Materi ${i} dari ${n}`,
     lessonPaused: (i: number, n: number) => `Materi dijeda (${i} dari ${n})`,
@@ -81,6 +87,11 @@ const T = {
     timeLeft: "Time left",
     sessionLimit: "Limited by the maximum session length (test mode: ~60s)",
     connecting: (name: string) => `Connecting to ${name}…`,
+    connectFailed: (name: string) =>
+      `${name} couldn't connect. Make sure microphone access is allowed, then try again.`,
+    backToSetup: "Go back",
+    micPermission:
+      "If your browser asks for microphone access, click Allow so the class can start.",
     preparing: "Preparing the lesson…",
     lessonProgress: (i: number, n: number) => `Part ${i} of ${n}`,
     lessonPaused: (i: number, n: number) => `Paused (part ${i} of ${n})`,
@@ -126,6 +137,16 @@ const T = {
   },
 } as const;
 
+export type SessionResult = {
+  /** null kalau sesi tidak pernah tersambung. */
+  startedAt: number | null;
+  endedAt: number;
+  endReason: EndReason;
+  messages: ClassRecord["messages"];
+};
+
+const CONNECT_TIMEOUT_MS = 45000;
+
 const formatClock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
@@ -154,7 +175,7 @@ const ClassroomSessionInner: React.FC<{
   language: LanguageCode;
   tutorName: string;
   courseTitle: string;
-  onSessionStopped: () => void;
+  onSessionStopped: (result: SessionResult) => void;
 }> = ({ mode, language, tutorName, courseTitle, onSessionStopped }) => {
   const t = T[language];
   const [message, setMessage] = useState("");
@@ -190,10 +211,28 @@ const ClassroomSessionInner: React.FC<{
   const { sendMessage } = useTextChat("FULL");
   const chatMessages = useChatHistory();
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Untuk riwayat kelas: kapan tersambung, isi percakapan, dan cara kelas
+  // berakhir (dibaca saat sesi terputus).
+  const startedAtRef = useRef<number | null>(null);
+  const messagesRef = useRef(chatMessages);
+  messagesRef.current = chatMessages;
+  const closingReasonRef = useRef(closing.reason);
+  closingReasonRef.current = closing.reason;
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (sessionState === SessionState.DISCONNECTED) onSessionStopped();
+    if (sessionState === SessionState.CONNECTED && !startedAtRef.current)
+      startedAtRef.current = Date.now();
+    if (sessionState === SessionState.DISCONNECTED)
+      onSessionStopped({
+        startedAt: startedAtRef.current,
+        endedAt: Date.now(),
+        endReason: closingReasonRef.current ?? "left",
+        messages: messagesRef.current.map((m) => ({
+          sender: m.sender === "user" ? "user" : "avatar",
+          message: m.message,
+        })),
+      });
   }, [sessionState, onSessionStopped]);
 
   useEffect(() => {
@@ -212,6 +251,30 @@ const ClassroomSessionInner: React.FC<{
   }, [startSession, sessionState]);
 
   const connected = sessionState === SessionState.CONNECTED;
+
+  // Keluar juga harus bisa saat masih menyambungkan: stop() di SDK tidak
+  // melakukan apa-apa sebelum sesi tersambung, jadi langsung kembali.
+  const leave = () => {
+    if (connected) {
+      stopSession();
+      return;
+    }
+    onSessionStopped({
+      startedAt: startedAtRef.current,
+      endedAt: Date.now(),
+      endReason: "left",
+      messages: [],
+    });
+  };
+
+  // Kalau guru tak kunjung tersambung, tampilkan pesan gagal, jangan
+  // biarkan peserta menunggu tanpa kepastian.
+  const [connectTimedOut, setConnectTimedOut] = useState(false);
+  useEffect(() => {
+    if (connected) return;
+    const id = setTimeout(() => setConnectTimedOut(true), CONNECT_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [connected]);
   const closingNow = closing.status !== "open";
   // Jalur Profesional: peserta bertanya setelah materi selesai.
   const micLocked = lesson.status === "playing" || closingNow;
@@ -225,7 +288,7 @@ const ClassroomSessionInner: React.FC<{
 
   const send = () => {
     const text = message.trim();
-    if (!text || micLocked) return;
+    if (!text || micLocked || !connected) return;
     sendMessage(text);
     setMessage("");
   };
@@ -278,7 +341,7 @@ const ClassroomSessionInner: React.FC<{
         <>
           {timer}
           <button
-            onClick={() => stopSession()}
+            onClick={leave}
             title={t.leaveTitle}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
           >
@@ -378,10 +441,24 @@ const ClassroomSessionInner: React.FC<{
                 connected ? "opacity-100" : "opacity-0"
               }`}
             />
-            {!connected && (
+            {!connected && !connectTimedOut && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm text-white/80">
                 <span className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                 {t.connecting(tutorName)}
+                <span className="max-w-xs px-6 text-center text-xs text-white/60">
+                  {t.micPermission}
+                </span>
+              </div>
+            )}
+            {!connected && connectTimedOut && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center text-sm text-white/90">
+                <p>{t.connectFailed(tutorName)}</p>
+                <button
+                  onClick={leave}
+                  className="rounded-xl bg-white px-4 py-2 font-semibold text-slate-900 transition hover:bg-teal-50"
+                >
+                  {t.backToSetup}
+                </button>
               </div>
             )}
             <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
@@ -524,7 +601,7 @@ const ClassroomSessionInner: React.FC<{
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                disabled={micLocked}
+                disabled={micLocked || !connected}
                 placeholder={
                   micLocked ? t.chatPlaceholderLocked : t.chatPlaceholder
                 }
@@ -532,7 +609,7 @@ const ClassroomSessionInner: React.FC<{
               />
               <button
                 type="submit"
-                disabled={micLocked || !message.trim()}
+                disabled={micLocked || !connected || !message.trim()}
                 className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
               >
                 {t.send}
@@ -552,7 +629,7 @@ export const ClassroomSession: React.FC<{
   courseTitle: string;
   sessionAccessToken: string;
   voiceChatConfig: VoiceChatConfig;
-  onSessionStopped: () => void;
+  onSessionStopped: (result: SessionResult) => void;
 }> = ({
   pushToTalk,
   language,

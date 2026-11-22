@@ -175,11 +175,32 @@ const Example = ({ children }: { children: React.ReactNode }) => (
  * guru, opsi) dengan panel ringkasan dan tombol Mulai Kelas. Profil disimpan
  * di browser; kunjungan berikutnya langsung ke halaman setup yang sudah terisi.
  */
-export const Onboarding = (props: OnboardingProps) => (
-  <GuruShell>
-    <OnboardingSteps {...props} />
-  </GuruShell>
-);
+export const Onboarding = ({
+  onOpenHistory,
+  ...props
+}: OnboardingProps & {
+  /** Ada kalau peserta sudah punya riwayat kelas. */
+  onOpenHistory?: () => void;
+}) => {
+  const [lang, setLang] = useState<LanguageCode>("id");
+  useEffect(() => setLang(loadLearnerProfile().language ?? "id"), []);
+  return (
+    <GuruShell
+      headerRight={
+        onOpenHistory && (
+          <button
+            onClick={onOpenHistory}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-700/50 hover:text-teal-700"
+          >
+            {lang === "id" ? "Riwayat belajar" : "Learning history"}
+          </button>
+        )
+      }
+    >
+      <OnboardingSteps {...props} />
+    </GuruShell>
+  );
+};
 
 type OnboardingProps = {
   onStart: (profile: LearnerProfile) => void;
@@ -187,6 +208,8 @@ type OnboardingProps = {
   error: string | null;
   settings: ClassSettings | null;
   onSettingsChange: (settings: ClassSettings) => void;
+  /** Langsung ke halaman setup (mis. setelah keluar dari kelas). */
+  resumeSetup?: boolean;
 };
 
 const OnboardingSteps = ({
@@ -195,6 +218,7 @@ const OnboardingSteps = ({
   error,
   settings,
   onSettingsChange,
+  resumeSetup,
 }: OnboardingProps) => {
   const [profile, setProfile] = useState<Partial<LearnerProfile> | null>(null);
   const [step, setStep] = useState<Step>("language");
@@ -206,7 +230,12 @@ const OnboardingSteps = ({
     if (!saved.classKey) saved.classKey = "data-analysis";
     const initial = withValidTutor(saved);
     setProfile(initial);
-    setStep(firstStep(initial));
+    setStep(
+      resumeSetup && initial.language && initial.track
+        ? "setup"
+        : firstStep(initial),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya saat mount
   }, []);
 
   if (!profile) return null;
