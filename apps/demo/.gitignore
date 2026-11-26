@@ -39,3 +39,6 @@ next-env.d.ts
 .open-next
 .wrangler
 .dev.vars*
+
+# video materi HeyGen (besar, jangan di-commit)
+/public/materi/*.mp4
